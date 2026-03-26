@@ -253,7 +253,6 @@
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 1px solid rgba(220,38,38,0.3);
-            animation: fadeInScale 0.5s ease;
             opacity: 0;
             transform: translateY(20px);
             animation: fadeInUp 0.5s ease forwards;
@@ -679,16 +678,17 @@
     </div>
 
     <script>
-        // Configuration - Auto-detect both .JPG and .jpg
+        // Configuration - Fix folder names to match GitHub
+        // Based on your error, the folder name in GitHub is 'KCat18_LQ' not 'KC@18_LQ'
         const LOW_QUALITY_FOLDER = 'KCat18_LQ';
         const ORIGINAL_FOLDER = 'KCat18';
-        const HEADER_IMAGE = '_DSC0226';
+        const HEADER_IMAGE_BASE = '_DSC0226';
         const MUSIC_FILE = 'music/One Direction - 18 (Lyrics) (1).mp3';
         
         // Supported extensions (case-insensitive)
         const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG'];
         
-        // Base image names without extension
+        // Base image names without extension (all your images)
         const baseImageNames = [
             '_DSC0031', '_DSC0032', '_DSC0033', '_DSC0034', '_DSC0035',
             '_DSC0036', '_DSC0037', '_DSC0039', '_DSC0044', '_DSC0045',
@@ -748,9 +748,11 @@
                 const url = `${folder}/${baseName}${ext}`;
                 const exists = await imageExists(url);
                 if (exists) {
-                    return url;
+                    console.log(`Found: ${url}`);
+                    return { url, ext };
                 }
             }
+            console.log(`Not found: ${baseName} in ${folder}`);
             return null;
         }
         
@@ -767,23 +769,28 @@
         // Get all image paths with correct extensions
         async function getAllImagePaths() {
             const imagePaths = [];
+            let foundCount = 0;
             
             for (const baseName of baseImageNames) {
-                const lqPath = await findImagePath(baseName, LOW_QUALITY_FOLDER);
-                if (lqPath) {
-                    // Extract the actual filename with correct extension
-                    const fileName = lqPath.split('/').pop();
+                const result = await findImagePath(baseName, LOW_QUALITY_FOLDER);
+                if (result) {
+                    const fileName = `${baseName}${result.ext}`;
                     const imageNum = getImageNumber(fileName);
                     imagePaths.push({
                         name: fileName,
                         timestamp: imageNum,
                         displayDate: `DSC-${String(imageNum).padStart(4, '0')}`
                     });
-                } else {
-                    console.log(`Image not found: ${baseName}`);
+                    foundCount++;
+                }
+                
+                // Update status every 10 images
+                if (baseImageNames.indexOf(baseName) % 10 === 0) {
+                    document.getElementById('stats').textContent = `Scanning: ${foundCount}/${baseImageNames.length} images found...`;
                 }
             }
             
+            console.log(`Total images found: ${foundCount}`);
             return imagePaths;
         }
         
@@ -868,7 +875,6 @@
             image.onerror = () => {
                 console.log('Failed to load:', src);
                 if (skeleton) skeleton.style.display = 'none';
-                imgElement.src = src;
                 imgElement.classList.add('loaded');
                 loadedImagesCount++;
             };
@@ -887,6 +893,12 @@
             loadingBar.style.display = 'block';
             loadingBar.style.opacity = '1';
             document.getElementById('loadingProgress').style.width = '0%';
+            
+            if (imagesArray.length === 0) {
+                grid.innerHTML = '<div class="loading-state"><p>⚠️ No images found. Please check folder structure.</p><p style="font-size: 0.8rem; margin-top: 1rem;">Expected folders: KCat18_LQ/ and KCat18/ with JPG images</p></div>';
+                document.getElementById('stats').textContent = 'No images found';
+                return;
+            }
             
             imagesArray.forEach((image, index) => {
                 const card = document.createElement('div');
@@ -935,16 +947,17 @@
         // Load header image with case-insensitive extension detection
         async function loadHeaderImage() {
             const heroImg = document.getElementById('heroImage');
-            const headerPath = await findImagePath(HEADER_IMAGE, LOW_QUALITY_FOLDER);
+            const result = await findImagePath(HEADER_IMAGE_BASE, LOW_QUALITY_FOLDER);
             
-            if (headerPath) {
-                heroImg.src = headerPath;
+            if (result) {
+                heroImg.src = result.url;
             } else {
-                const originalPath = await findImagePath(HEADER_IMAGE, ORIGINAL_FOLDER);
-                if (originalPath) {
-                    heroImg.src = originalPath;
+                const originalResult = await findImagePath(HEADER_IMAGE_BASE, ORIGINAL_FOLDER);
+                if (originalResult) {
+                    heroImg.src = originalResult.url;
                 } else {
                     console.log('Header image not found');
+                    heroImg.style.display = 'none';
                 }
             }
         }
@@ -1035,14 +1048,8 @@
             if (images.length === 0) return;
             
             isAutoPlaying = true;
-            
-            // Start music
             startMusic();
-            
-            // Open fullscreen with first image
             openFullscreen(0);
-            
-            // Start cycling through images every 4 seconds
             autoPlayInterval = setInterval(() => {
                 nextFullscreen();
             }, 4000);
@@ -1056,16 +1063,13 @@
                 autoPlayInterval = null;
             }
             isAutoPlaying = false;
-            
-            // Stop music
             stopMusic();
-            
             closeFullscreen();
             document.getElementById('stats').textContent = `📸 ${images.length} images • ${getSortLabel()}`;
         }
         
         async function refreshGallery() {
-            document.getElementById('imageGrid').innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading KC@18 Gallery...</p></div>';
+            document.getElementById('imageGrid').innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Scanning for images in KCat18_LQ/ folder...</p></div>';
             const imageObjects = await getAllImagePaths();
             const sorted = sortImages(imageObjects);
             images = sorted;
