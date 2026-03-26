@@ -254,15 +254,16 @@
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 1px solid rgba(220,38,38,0.3);
             animation: fadeInScale 0.5s ease;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.5s ease forwards;
         }
 
-        @keyframes fadeInUp {
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: scale(1);
             }
         }
 
@@ -288,29 +289,10 @@
             height: 100%;
             object-fit: cover;
             transition: transform 0.5s ease;
-            opacity: 0;
-            transition: opacity 0.3s ease, transform 0.5s ease;
         }
 
-        .card-image img.loaded {
-            opacity: 1;
-        }
-
-        /* Skeleton Loader */
-        .skeleton {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, #1a0a0a 25%, #2a1a1a 50%, #1a0a0a 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+        .grid-card:hover .card-image img {
+            transform: scale(1.05);
         }
 
         .card-overlay {
@@ -355,7 +337,6 @@
             font-size: 0.7rem;
             color: white;
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            z-index: 2;
         }
 
         .card-date {
@@ -521,24 +502,6 @@
             to { opacity: 1; }
         }
 
-        /* Loading Bar */
-        .loading-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: rgba(220,38,38,0.3);
-            z-index: 1000;
-        }
-
-        .loading-progress {
-            height: 100%;
-            background: var(--primary-red);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
             .hero-content {
@@ -621,19 +584,14 @@
     </style>
 </head>
 <body>
-    <!-- Loading Bar -->
-    <div class="loading-bar" id="loadingBar">
-        <div class="loading-progress" id="loadingProgress"></div>
-    </div>
-
     <!-- Hero Section with Text at Top -->
     <div class="hero-section">
         <img class="hero-image" id="heroImage" alt="KC@18 Debut">
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <h1>KC@18</h1>
-            <p>A Debut to Remember</p>
-            <div class="hero-badge" id="imageCount">Loading...</div>
+            <p>A Debut to Remember 03-22-2026</p>
+            <div class="hero-badge" id="imageCount">206 Moments Captured</div>
         </div>
     </div>
 
@@ -679,14 +637,7 @@
     </div>
 
     <script>
-        // Configuration for GitHub Pages
-        // Get the current path to handle both local and GitHub Pages
-        const getBasePath = () => {
-            const path = window.location.pathname;
-            const isGitHubPages = path.includes('/KC_DEBUT/') || path.includes('/kc-debut/');
-            return isGitHubPages ? '' : '';
-        };
-        
+        // Configuration
         const LOW_QUALITY_FOLDER = 'KC@18_LQ';
         const ORIGINAL_FOLDER = 'KC@18';
         const HEADER_IMAGE = '_DSC0226.JPG';
@@ -744,36 +695,19 @@
         let isAutoPlaying = false;
         let currentSort = 'date-oldest';
         let audio = null;
-        let loadedImagesCount = 0;
-        
-        // Function to check if an image exists
-        async function imageExists(url) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(false);
-                img.src = url;
-            });
-        }
         
         // Initialize audio
         function initAudio() {
-            try {
-                audio = new Audio(MUSIC_FILE);
-                audio.loop = true;
-                audio.volume = 0.5;
-            } catch(e) {
-                console.log('Audio initialization failed:', e);
-            }
+            audio = new Audio(MUSIC_FILE);
+            audio.loop = true;
+            audio.volume = 0.5;
         }
         
         function startMusic() {
             if (!audio) {
                 initAudio();
             }
-            if (audio) {
-                audio.play().catch(e => console.log('Audio play failed:', e));
-            }
+            audio.play().catch(e => console.log('Audio play failed:', e));
         }
         
         function stopMusic() {
@@ -824,65 +758,19 @@
             return sorted;
         }
         
-        // Lazy load images one by one
-        function lazyLoadImage(imgElement, src, card) {
-            const skeleton = card.querySelector('.skeleton');
-            const image = new Image();
-            
-            image.onload = () => {
-                imgElement.src = src;
-                imgElement.classList.add('loaded');
-                if (skeleton) skeleton.style.display = 'none';
-                
-                loadedImagesCount++;
-                const progress = (loadedImagesCount / images.length) * 100;
-                document.getElementById('loadingProgress').style.width = `${progress}%`;
-                
-                if (loadedImagesCount === images.length) {
-                    setTimeout(() => {
-                        document.getElementById('loadingBar').style.opacity = '0';
-                        setTimeout(() => {
-                            document.getElementById('loadingBar').style.display = 'none';
-                        }, 500);
-                    }, 500);
-                }
-            };
-            
-            image.onerror = () => {
-                console.log('Failed to load:', src);
-                if (skeleton) skeleton.style.display = 'none';
-                imgElement.src = src;
-                imgElement.classList.add('loaded');
-                loadedImagesCount++;
-            };
-            
-            image.src = src;
-        }
-        
-        // Display images in grid with lazy loading
+        // Display images in grid
         function displayImages(imagesArray) {
             const grid = document.getElementById('imageGrid');
             grid.innerHTML = '';
-            loadedImagesCount = 0;
-            
-            // Reset loading bar
-            const loadingBar = document.getElementById('loadingBar');
-            loadingBar.style.display = 'block';
-            loadingBar.style.opacity = '1';
-            document.getElementById('loadingProgress').style.width = '0%';
             
             imagesArray.forEach((image, index) => {
                 const card = document.createElement('div');
                 card.className = 'grid-card';
-                card.style.animationDelay = `${index * 0.02}s`;
                 card.onclick = () => openFullscreen(index);
-                
-                const imageUrl = `${LOW_QUALITY_FOLDER}/${image.name}`;
                 
                 card.innerHTML = `
                     <div class="card-image">
-                        <div class="skeleton"></div>
-                        <img data-src="${imageUrl}" alt="${image.name}" loading="lazy">
+                        <img src="${LOW_QUALITY_FOLDER}/${image.name}" alt="${image.name}" loading="lazy">
                         <div class="card-info">
                             <span class="card-date">📅 ${image.displayDate}</span>
                             <span class="card-name">📷 ${image.name}</span>
@@ -896,19 +784,6 @@
                 `;
                 
                 grid.appendChild(card);
-                
-                // Lazy load image
-                const img = card.querySelector('img');
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            lazyLoadImage(img, imageUrl, card);
-                            observer.disconnect();
-                        }
-                    });
-                }, { rootMargin: '50px' });
-                
-                observer.observe(img);
             });
             
             document.getElementById('stats').textContent = `📸 ${imagesArray.length} images • ${getSortLabel()}`;
@@ -916,16 +791,12 @@
         }
         
         // Load header image
-        async function loadHeaderImage() {
+        function loadHeaderImage() {
             const heroImg = document.getElementById('heroImage');
-            const headerPath = `${LOW_QUALITY_FOLDER}/${HEADER_IMAGE}`;
-            const exists = await imageExists(headerPath);
-            if (exists) {
-                heroImg.src = headerPath;
-            } else {
-                const originalPath = `${ORIGINAL_FOLDER}/${HEADER_IMAGE}`;
-                heroImg.src = originalPath;
-            }
+            heroImg.src = `${LOW_QUALITY_FOLDER}/${HEADER_IMAGE}`;
+            heroImg.onerror = () => {
+                heroImg.src = `${ORIGINAL_FOLDER}/${HEADER_IMAGE}`;
+            };
         }
         
         function getSortLabel() {
