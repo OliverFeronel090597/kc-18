@@ -679,63 +679,59 @@
     </div>
 
     <script>
-        // Configuration for GitHub Pages
-        // Get the current path to handle both local and GitHub Pages
-        const getBasePath = () => {
-            const path = window.location.pathname;
-            const isGitHubPages = path.includes('/KC_DEBUT/') || path.includes('/kc-debut/');
-            return isGitHubPages ? '' : '';
-        };
-        
+        // Configuration - Auto-detect both .JPG and .jpg
         const LOW_QUALITY_FOLDER = 'KCat18_LQ';
         const ORIGINAL_FOLDER = 'KCat18';
-        const HEADER_IMAGE = '_DSC0226.JPG';
+        const HEADER_IMAGE = '_DSC0226';
         const MUSIC_FILE = 'music/One Direction - 18 (Lyrics) (1).mp3';
         
-        // All 206 images from your directory
-        const imageNames = [
-            '_DSC0031.JPG', '_DSC0032.JPG', '_DSC0033.JPG', '_DSC0034.JPG', '_DSC0035.JPG',
-            '_DSC0036.JPG', '_DSC0037.JPG', '_DSC0039.JPG', '_DSC0044.JPG', '_DSC0045.JPG',
-            '_DSC0052.JPG', '_DSC0054.JPG', '_DSC0056.JPG', '_DSC0057.JPG', '_DSC0058.JPG',
-            '_DSC0059.JPG', '_DSC0060.JPG', '_DSC0068.JPG', '_DSC0069.JPG', '_DSC0070.JPG',
-            '_DSC0071.JPG', '_DSC0072.JPG', '_DSC0074.JPG', '_DSC0075.JPG', '_DSC0092.JPG',
-            '_DSC0093.JPG', '_DSC0094.JPG', '_DSC0095.JPG', '_DSC0096.JPG', '_DSC0097.JPG',
-            '_DSC0098.JPG', '_DSC0099.JPG', '_DSC0100.JPG', '_DSC0101.JPG', '_DSC0102.JPG',
-            '_DSC0103.JPG', '_DSC0104.JPG', '_DSC0105.JPG', '_DSC0106.JPG', '_DSC0107.JPG',
-            '_DSC0108.JPG', '_DSC0120.JPG', '_DSC0121.JPG', '_DSC0122.JPG', '_DSC0123.JPG',
-            '_DSC0124.JPG', '_DSC0126.JPG', '_DSC0127.JPG', '_DSC0128.JPG', '_DSC0129.JPG',
-            '_DSC0130.JPG', '_DSC0131.JPG', '_DSC0132.JPG', '_DSC0133.JPG', '_DSC0134.JPG',
-            '_DSC0135.JPG', '_DSC0136.JPG', '_DSC0149.JPG', '_DSC0150.JPG', '_DSC0151.JPG',
-            '_DSC0173.JPG', '_DSC0177.jpg', '_DSC0184.JPG', '_DSC0185.JPG', '_DSC0186.JPG',
-            '_DSC0189.JPG', '_DSC0190.JPG', '_DSC0195.JPG', '_DSC0219.jpg', '_DSC0224.JPG',
-            '_DSC0225.JPG', '_DSC0226.JPG', '_DSC0229.JPG', '_DSC0230.JPG', '_DSC0232.JPG',
-            '_DSC0234.JPG', '_DSC0235.JPG', '_DSC0241.JPG', '_DSC0244.JPG', '_DSC0246.JPG',
-            '_DSC0247.JPG', '_DSC0248.JPG', '_DSC0260.JPG', '_DSC0261.JPG', '_DSC0262.JPG',
-            '_DSC0267.JPG', '_DSC0351.JPG', '_DSC0352.JPG', '_DSC0356.JPG', '_DSC0358.JPG',
-            '_DSC0359.JPG', '_DSC0360.JPG', '_DSC0361.JPG', '_DSC0385.JPG', '_DSC0386.JPG',
-            '_DSC0387.JPG', '_DSC0393.JPG', '_DSC0394.JPG', '_DSC0395.JPG', '_DSC0396.JPG',
-            '_DSC0397.JPG', '_DSC0398.JPG', '_DSC0424.JPG', '_DSC0425.JPG', '_DSC0426.JPG',
-            '_DSC0429.JPG', '_DSC0430.JPG', '_DSC0439.JPG', '_DSC0440.JPG', '_DSC0441.JPG',
-            '_DSC0442.JPG', '_DSC0443.JPG', '_DSC0444.JPG', '_DSC0446.JPG', '_DSC0448.JPG',
-            '_DSC0449.JPG', '_DSC0450.JPG', '_DSC0454.JPG', '_DSC0455.JPG', '_DSC0456.JPG',
-            '_DSC0457.JPG', '_DSC0458.JPG', '_DSC0495.JPG', '_DSC0496.JPG', '_DSC0497.JPG',
-            '_DSC0499.JPG', '_DSC0500.JPG', '_DSC0501.JPG', '_DSC0506.jpg', '_DSC0507.JPG',
-            '_DSC0508.JPG', '_DSC0509.JPG', '_DSC0510.JPG', '_DSC0511.JPG', '_DSC0512.JPG',
-            '_DSC0514.JPG', '_DSC0515.JPG', '_DSC0516.JPG', '_DSC0517.JPG', '_DSC0518.JPG',
-            '_DSC0519.JPG', '_DSC0520.JPG', '_DSC0521.JPG', '_DSC0523.JPG', '_DSC0532.JPG',
-            '_DSC0533.JPG', '_DSC0542.JPG', '_DSC0545.JPG', '_DSC0553.JPG', '_DSC0554.JPG',
-            '_DSC0556.JPG', '_DSC0562.JPG', '_DSC0563.JPG', '_DSC0564.JPG', '_DSC0566.JPG',
-            '_DSC0567.JPG', '_DSC0568.JPG', '_DSC0588.JPG', '_DSC0589.JPG', '_DSC0590.JPG',
-            '_DSC0596.JPG', '_DSC0597.JPG', '_DSC0598.JPG', '_DSC0599.JPG', '_DSC0605.JPG',
-            '_DSC0607.JPG', '_DSC0608.JPG', '_DSC0617.JPG', '_DSC0618.JPG', '_DSC0619.JPG',
-            '_DSC0623.JPG', '_DSC0624.JPG', '_DSC0625.JPG', '_DSC0626.JPG', '_DSC0629.JPG',
-            '_DSC0660.JPG', '_DSC0661.JPG', '_DSC0662.JPG', '_DSC0663.JPG', '_DSC0664.JPG',
-            '_DSC0665.JPG', '_DSC0666.JPG', '_DSC0667.JPG', '_DSC0669.JPG', '_DSC0670.JPG',
-            '_DSC0702.JPG', '_DSC0703.JPG', '_DSC0704.JPG', '_DSC0705.JPG', '_DSC0706.JPG',
-            '_DSC0709.JPG', '_DSC0710.JPG', '_DSC0711.JPG', '_DSC0712.JPG', '_DSC0723.JPG',
-            '_DSC0724.JPG', '_DSC0726.JPG', '_DSC0727.JPG', '_DSC0734.JPG', '_DSC0735.JPG',
-            '_DSC0736.JPG', '_DSC0743.jpg', '_DSC0747.JPG', '_DSC0748.JPG', '_DSC0751.JPG',
-            '_DSC0752.JPG'
+        // Supported extensions (case-insensitive)
+        const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG'];
+        
+        // Base image names without extension
+        const baseImageNames = [
+            '_DSC0031', '_DSC0032', '_DSC0033', '_DSC0034', '_DSC0035',
+            '_DSC0036', '_DSC0037', '_DSC0039', '_DSC0044', '_DSC0045',
+            '_DSC0052', '_DSC0054', '_DSC0056', '_DSC0057', '_DSC0058',
+            '_DSC0059', '_DSC0060', '_DSC0068', '_DSC0069', '_DSC0070',
+            '_DSC0071', '_DSC0072', '_DSC0074', '_DSC0075', '_DSC0092',
+            '_DSC0093', '_DSC0094', '_DSC0095', '_DSC0096', '_DSC0097',
+            '_DSC0098', '_DSC0099', '_DSC0100', '_DSC0101', '_DSC0102',
+            '_DSC0103', '_DSC0104', '_DSC0105', '_DSC0106', '_DSC0107',
+            '_DSC0108', '_DSC0120', '_DSC0121', '_DSC0122', '_DSC0123',
+            '_DSC0124', '_DSC0126', '_DSC0127', '_DSC0128', '_DSC0129',
+            '_DSC0130', '_DSC0131', '_DSC0132', '_DSC0133', '_DSC0134',
+            '_DSC0135', '_DSC0136', '_DSC0149', '_DSC0150', '_DSC0151',
+            '_DSC0173', '_DSC0177', '_DSC0184', '_DSC0185', '_DSC0186',
+            '_DSC0189', '_DSC0190', '_DSC0195', '_DSC0219', '_DSC0224',
+            '_DSC0225', '_DSC0226', '_DSC0229', '_DSC0230', '_DSC0232',
+            '_DSC0234', '_DSC0235', '_DSC0241', '_DSC0244', '_DSC0246',
+            '_DSC0247', '_DSC0248', '_DSC0260', '_DSC0261', '_DSC0262',
+            '_DSC0267', '_DSC0351', '_DSC0352', '_DSC0356', '_DSC0358',
+            '_DSC0359', '_DSC0360', '_DSC0361', '_DSC0385', '_DSC0386',
+            '_DSC0387', '_DSC0393', '_DSC0394', '_DSC0395', '_DSC0396',
+            '_DSC0397', '_DSC0398', '_DSC0424', '_DSC0425', '_DSC0426',
+            '_DSC0429', '_DSC0430', '_DSC0439', '_DSC0440', '_DSC0441',
+            '_DSC0442', '_DSC0443', '_DSC0444', '_DSC0446', '_DSC0448',
+            '_DSC0449', '_DSC0450', '_DSC0454', '_DSC0455', '_DSC0456',
+            '_DSC0457', '_DSC0458', '_DSC0495', '_DSC0496', '_DSC0497',
+            '_DSC0499', '_DSC0500', '_DSC0501', '_DSC0506', '_DSC0507',
+            '_DSC0508', '_DSC0509', '_DSC0510', '_DSC0511', '_DSC0512',
+            '_DSC0514', '_DSC0515', '_DSC0516', '_DSC0517', '_DSC0518',
+            '_DSC0519', '_DSC0520', '_DSC0521', '_DSC0523', '_DSC0532',
+            '_DSC0533', '_DSC0542', '_DSC0545', '_DSC0553', '_DSC0554',
+            '_DSC0556', '_DSC0562', '_DSC0563', '_DSC0564', '_DSC0566',
+            '_DSC0567', '_DSC0568', '_DSC0588', '_DSC0589', '_DSC0590',
+            '_DSC0596', '_DSC0597', '_DSC0598', '_DSC0599', '_DSC0605',
+            '_DSC0607', '_DSC0608', '_DSC0617', '_DSC0618', '_DSC0619',
+            '_DSC0623', '_DSC0624', '_DSC0625', '_DSC0626', '_DSC0629',
+            '_DSC0660', '_DSC0661', '_DSC0662', '_DSC0663', '_DSC0664',
+            '_DSC0665', '_DSC0666', '_DSC0667', '_DSC0669', '_DSC0670',
+            '_DSC0702', '_DSC0703', '_DSC0704', '_DSC0705', '_DSC0706',
+            '_DSC0709', '_DSC0710', '_DSC0711', '_DSC0712', '_DSC0723',
+            '_DSC0724', '_DSC0726', '_DSC0727', '_DSC0734', '_DSC0735',
+            '_DSC0736', '_DSC0743', '_DSC0747', '_DSC0748', '_DSC0751',
+            '_DSC0752'
         ];
         
         let images = [];
@@ -746,6 +742,18 @@
         let audio = null;
         let loadedImagesCount = 0;
         
+        // Function to find the correct file extension (case-insensitive)
+        async function findImagePath(baseName, folder) {
+            for (const ext of SUPPORTED_EXTENSIONS) {
+                const url = `${folder}/${baseName}${ext}`;
+                const exists = await imageExists(url);
+                if (exists) {
+                    return url;
+                }
+            }
+            return null;
+        }
+        
         // Function to check if an image exists
         async function imageExists(url) {
             return new Promise((resolve) => {
@@ -754,6 +762,29 @@
                 img.onerror = () => resolve(false);
                 img.src = url;
             });
+        }
+        
+        // Get all image paths with correct extensions
+        async function getAllImagePaths() {
+            const imagePaths = [];
+            
+            for (const baseName of baseImageNames) {
+                const lqPath = await findImagePath(baseName, LOW_QUALITY_FOLDER);
+                if (lqPath) {
+                    // Extract the actual filename with correct extension
+                    const fileName = lqPath.split('/').pop();
+                    const imageNum = getImageNumber(fileName);
+                    imagePaths.push({
+                        name: fileName,
+                        timestamp: imageNum,
+                        displayDate: `DSC-${String(imageNum).padStart(4, '0')}`
+                    });
+                } else {
+                    console.log(`Image not found: ${baseName}`);
+                }
+            }
+            
+            return imagePaths;
         }
         
         // Initialize audio
@@ -788,20 +819,6 @@
             const match = filename.match(/_DSC(\d+)/i);
             if (match) return parseInt(match[1]);
             return 0;
-        }
-        
-        // Create image objects
-        async function createImageObjects() {
-            const imageObjects = [];
-            for (const name of imageNames) {
-                const imageNum = getImageNumber(name);
-                imageObjects.push({
-                    name: name,
-                    timestamp: imageNum,
-                    displayDate: `DSC-${String(imageNum).padStart(4, '0')}`
-                });
-            }
-            return imageObjects;
         }
         
         // Sort images
@@ -915,16 +932,20 @@
             document.getElementById('imageCount').textContent = `${imagesArray.length} Moments Captured`;
         }
         
-        // Load header image
+        // Load header image with case-insensitive extension detection
         async function loadHeaderImage() {
             const heroImg = document.getElementById('heroImage');
-            const headerPath = `${LOW_QUALITY_FOLDER}/${HEADER_IMAGE}`;
-            const exists = await imageExists(headerPath);
-            if (exists) {
+            const headerPath = await findImagePath(HEADER_IMAGE, LOW_QUALITY_FOLDER);
+            
+            if (headerPath) {
                 heroImg.src = headerPath;
             } else {
-                const originalPath = `${ORIGINAL_FOLDER}/${HEADER_IMAGE}`;
-                heroImg.src = originalPath;
+                const originalPath = await findImagePath(HEADER_IMAGE, ORIGINAL_FOLDER);
+                if (originalPath) {
+                    heroImg.src = originalPath;
+                } else {
+                    console.log('Header image not found');
+                }
             }
         }
         
@@ -1045,7 +1066,7 @@
         
         async function refreshGallery() {
             document.getElementById('imageGrid').innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading KC@18 Gallery...</p></div>';
-            const imageObjects = await createImageObjects();
+            const imageObjects = await getAllImagePaths();
             const sorted = sortImages(imageObjects);
             images = sorted;
             displayImages(images);
