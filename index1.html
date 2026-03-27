@@ -1,118 +1,1080 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KC-18 Gallery</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>KC@18 - Debut Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<style>
-    body {
-        background: #111;
-        color: #fff;
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 20px;
-    }
-    h1 {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    #status {
-        text-align: center;
-        font-size: 18px;
-        margin-bottom: 20px;
-    }
-    .hidden {
-        display: none;
-    }
-    #gallery {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-    }
-    #gallery img {
-        width: 300px;
-        height: auto;
-        border-radius: 6px;
-        object-fit: cover;
-        transition: transform .2s;
-    }
-    #gallery img:hover {
-        transform: scale(1.05);
-    }
-</style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Skip Link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #ff6b6b;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            z-index: 100;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Loading Bar */
+        .loading-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,0.2);
+            z-index: 1000;
+            display: none;
+        }
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            transition: width 0.3s ease;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            position: relative;
+            height: 60vh;
+            min-height: 400px;
+            overflow: hidden;
+        }
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7);
+        }
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.5), rgba(0,0,0,0.7));
+        }
+        .hero-content {
+            position: absolute;
+            bottom: 20%;
+            left: 10%;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .hero-content h1 {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            animation: fadeInUp 1s ease;
+        }
+        .hero-content p {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease 0.2s both;
+        }
+        .hero-badge {
+            margin-top: 1rem;
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            animation: fadeInUp 1s ease 0.4s both;
+        }
+
+        /* Controls Bar */
+        .controls-bar {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #4ecdc4;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #45b7aa;
+            transform: translateY(-2px);
+        }
+        .stats {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Sort Bar */
+        .sort-bar {
+            background: rgba(0,0,0,0.6);
+            padding: 0.8rem 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sort-label {
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .sort-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .sort-btn:hover, .sort-btn.active {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        /* Image Grid */
+        .grid-container {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .grid-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 0.5s ease both;
+        }
+        .grid-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .card-image {
+            position: relative;
+            aspect-ratio: 1;
+            overflow: hidden;
+        }
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .grid-card:hover .card-image img {
+            transform: scale(1.05);
+        }
+        .skeleton {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+            animation: skeleton 1.5s infinite;
+        }
+        .card-info {
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+        .card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .grid-card:hover .card-overlay {
+            opacity: 1;
+        }
+        .download-card-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            width: 100%;
+        }
+
+        /* Fullscreen Modal */
+        .fullscreen-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .fullscreen-modal.active {
+            display: flex;
+        }
+        .fullscreen-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+        .fullscreen-image {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        .fullscreen-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        .fullscreen-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 1rem;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+        .fullscreen-nav:hover {
+            background: rgba(255,255,255,0.4);
+        }
+        .fullscreen-prev {
+            left: -60px;
+        }
+        .fullscreen-next {
+            right: -60px;
+        }
+        .fullscreen-info {
+            position: absolute;
+            bottom: -40px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        /* Loading State */
+        .loading-state {
+            text-align: center;
+            padding: 3rem;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        /* Floating Buttons */
+        .floating-button {
+            position: fixed;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 200;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+        .floating-button:hover {
+            transform: scale(1.05);
+            background: #ff5252;
+        }
+        #floating-download-button {
+            bottom: 20px;
+            right: 20px;
+        }
+        #floating-help-button {
+            bottom: 20px;
+            right: 90px;
+        }
+
+        /* Popups */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .popup-content {
+            background: white;
+            color: #333;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 400px;
+            text-align: center;
+        }
+        .popup-content h3 {
+            margin-bottom: 1rem;
+        }
+        .popup-content button {
+            margin: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .popup-content .confirm-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+        .popup-content .cancel-btn {
+            background: #ccc;
+            color: #333;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes skeleton {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .hero-content h1 { font-size: 2rem; }
+            .hero-content p { font-size: 1rem; }
+            .controls-bar { flex-direction: column; text-align: center; }
+            .fullscreen-prev { left: 10px; }
+            .fullscreen-next { right: 10px; }
+            .fullscreen-nav { font-size: 1.5rem; padding: 0.5rem; }
+        }
+    </style>
 </head>
-
 <body>
 
-<h1>KC-18 Gallery</h1>
+<a href="#imageGrid" class="skip-link">Skip to gallery</a>
 
-<div id="status">Checking images…</div>
-<div id="gallery" class="hidden"></div>
+<div class="loading-bar" id="loadingBar">
+    <div class="loading-progress" id="loadingProgress"></div>
+</div>
 
-<audio id="bg-music" loop autoplay>
+<div class="hero-section">
+    <img class="hero-image" id="heroImage" alt="KC@18 Debut">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1>KC@18</h1>
+        <p>A Debut to Remember</p>
+        <div class="hero-badge" id="imageCount">Loading...</div>
+    </div>
+</div>
+
+<div class="controls-bar">
+    <div class="logo">❤️ KC@18 GALLERY</div>
+    <div class="button-group">
+        <button class="btn btn-primary" id="autoPlayBtn">▶ AUTO PLAY</button>
+        <button class="btn btn-primary" id="downloadAllBtn">📥 DOWNLOAD ALL</button>
+        <button class="btn btn-secondary" id="refreshBtn">🔄 REFRESH</button>
+    </div>
+    <div class="stats" id="stats">Loading gallery...</div>
+</div>
+
+<div class="sort-bar">
+    <span class="sort-label">SORT BY:</span>
+    <button class="sort-btn active" data-sort="date-oldest">📅 OLDEST FIRST</button>
+    <button class="sort-btn" data-sort="date-newest">📅 NEWEST FIRST</button>
+    <button class="sort-btn" data-sort="name-asc">🔤 NAME A-Z</button>
+    <button class="sort-btn" data-sort="name-desc">🔤 NAME Z-A</button>
+</div>
+
+<div class="grid-container">
+    <div class="image-grid" id="imageGrid">
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading KC@18 Gallery...</p>
+        </div>
+    </div>
+</div>
+
+<div class="fullscreen-modal" id="fullscreenModal">
+    <div class="fullscreen-content">
+        <button class="fullscreen-close" id="fullscreenClose">✕</button>
+        <button class="fullscreen-nav fullscreen-prev" id="fullscreenPrev">◀</button>
+        <img class="fullscreen-image" id="fullscreenImage" alt="Full view">
+        <button class="fullscreen-nav fullscreen-next" id="fullscreenNext">▶</button>
+        <div class="fullscreen-info" id="fullscreenInfo"></div>
+    </div>
+</div>
+
+<!-- Floating Buttons -->
+<button class="floating-button" id="floating-download-button">📥</button>
+<button class="floating-button" id="floating-help-button">❓</button>
+
+<!-- Popups -->
+<div id="popupOverlay" class="popup-overlay">
+    <div class="popup-content">
+        <h3>Download Selected Images</h3>
+        <p>Are you sure you want to download all selected images?</p>
+        <button class="confirm-btn" onclick="confirmDownload()">Yes, Download</button>
+        <button class="cancel-btn" onclick="cancelDownload()">Cancel</button>
+    </div>
+</div>
+
+<div id="helpPopupOverlay" class="popup-overlay">
+    <div class="popup-content">
+        <h3>📸 Gallery Help</h3>
+        <p><strong>📱 How to use:</strong></p>
+        <p>• Click on any image to view fullscreen</p>
+        <p>• Double-click to open modal</p>
+        <p>• Select checkbox to mark for download</p>
+        <p>• Use AUTO PLAY for slideshow with music</p>
+        <p>• Drag the floating buttons anywhere</p>
+        <p>• Use arrow keys or swipe to navigate</p>
+        <p><strong>🎵 Music:</strong> One Direction - 18</p>
+        <button class="cancel-btn" onclick="closeHelpPopup()">Close</button>
+    </div>
+</div>
+
+<audio id="bg-music" loop>
     <source src="music/One Direction - 18 (Lyrics) (1).mp3" type="audio/mpeg">
 </audio>
 
 <script>
-const LOW_QUALITY_FOLDER = "KCat18_LQ";
-const TOTAL_IMAGES = 203;
-const gallery = document.getElementById("gallery");
-const statusBox = document.getElementById("status");
+// ============================================
+// KC@18 GALLERY - Simple Version (Like Your Working Code)
+// Uses direct paths with .JPG extension
+// ============================================
 
-async function fileExists(url) {
+// Configuration
+const LOW_QUALITY_FOLDER = 'KCat18_LQ';
+const ORIGINAL_FOLDER = 'KCat18';
+const HEADER_IMAGE_BASE = '1';
+const MUSIC_FILE = 'music/One Direction - 18 (Lyrics) (1).mp3';
+const TOTAL_IMAGES = 203; // Change this to your actual count
+
+// Global state
+let images = [];
+let currentImageIndex = 0;
+let autoPlayInterval = null;
+let isAutoPlaying = false;
+let audio = null;
+let clickTimeout = null;
+
+// ============================================
+// DISPLAY PHOTOS - Simple like your old code
+// ============================================
+
+function displayPhotos() {
+    const grid = document.getElementById('imageGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    images = []; // Reset images array
+    
+    for (let i = 1; i <= TOTAL_IMAGES; i++) {
+        const card = document.createElement("div");
+        card.classList.add("grid-card");
+        card.style.animationDelay = `${(i % 20) * 0.02}s`;
+        
+        const imageUrl = `${LOW_QUALITY_FOLDER}/${i}.JPG`;
+        
+        card.innerHTML = `
+            <div class="card-image">
+                <div class="skeleton"></div>
+                <img data-src="${imageUrl}" alt="Photo ${i}" loading="lazy">
+                <div class="card-info">
+                    <span class="card-date">📅 Photo ${i}</span>
+                    <span class="card-name">📷 Image ${i}</span>
+                </div>
+                <div class="card-overlay">
+                    <button class="download-card-btn" onclick="event.stopPropagation(); downloadOriginal(${i})">
+                        📥 Download Original
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        grid.appendChild(card);
+        
+        // Store original image source for navigation
+        images.push(`${ORIGINAL_FOLDER}/${i}.JPG`);
+        
+        // Lazy load images
+        const img = card.querySelector('img');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const skeleton = card.querySelector('.skeleton');
+                    const image = new Image();
+                    image.onload = () => {
+                        img.src = imageUrl;
+                        img.classList.add('loaded');
+                        if (skeleton) skeleton.style.display = 'none';
+                    };
+                    image.onerror = () => {
+                        if (skeleton) skeleton.style.display = 'none';
+                    };
+                    image.src = imageUrl;
+                    observer.disconnect();
+                }
+            });
+        }, { rootMargin: '100px' });
+        
+        observer.observe(img);
+        
+        // Double click to open modal
+        card.addEventListener("dblclick", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            currentImageIndex = i - 1;
+            openModal(images[currentImageIndex]);
+        });
+        
+        // Single click to select/deselect
+        card.addEventListener("click", function (e) {
+            if (e.target.classList.contains('download-card-btn')) return;
+            clearTimeout(clickTimeout);
+            clickTimeout = setTimeout(() => {
+                card.classList.toggle("selected");
+            }, 200);
+        });
+    }
+    
+    updateStats();
+    
+    // Hide loading bar
+    const loadingBar = document.getElementById('loadingBar');
+    if (loadingBar) {
+        loadingBar.style.opacity = '0';
+        setTimeout(() => {
+            loadingBar.style.display = 'none';
+        }, 500);
+    }
+}
+
+function updateStats() {
+    const statsEl = document.getElementById('stats');
+    const imageCountEl = document.getElementById('imageCount');
+    if (statsEl) statsEl.textContent = `📸 ${TOTAL_IMAGES} images`;
+    if (imageCountEl) imageCountEl.textContent = `${TOTAL_IMAGES} Moments Captured`;
+}
+
+// ============================================
+// MODAL FUNCTIONS (Same as your working code)
+// ============================================
+
+function openModal(imageSrc) {
+    const modal = document.getElementById("fullscreenModal");
+    const modalImg = document.getElementById("fullscreenImage");
+    const info = document.getElementById("fullscreenInfo");
+    if (!modal || !modalImg) return;
+    
+    modal.classList.add("active");
+    modalImg.src = imageSrc;
+    if (info) {
+        const num = currentImageIndex + 1;
+        info.textContent = `Photo ${num} | Image ${num}`;
+    }
+}
+
+function closeModal() {
+    const modal = document.getElementById("fullscreenModal");
+    if (modal) modal.classList.remove("active");
+}
+
+// Navigation functions
+function nextImage() {
+    currentImageIndex = (currentImageIndex + 1) % images.length;
+    const modalImg = document.getElementById("fullscreenImage");
+    const info = document.getElementById("fullscreenInfo");
+    if (modalImg) {
+        modalImg.src = images[currentImageIndex];
+        if (info) {
+            const num = currentImageIndex + 1;
+            info.textContent = `Photo ${num} | Image ${num}`;
+        }
+    }
+}
+
+function prevImage() {
+    currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+    const modalImg = document.getElementById("fullscreenImage");
+    const info = document.getElementById("fullscreenInfo");
+    if (modalImg) {
+        modalImg.src = images[currentImageIndex];
+        if (info) {
+            const num = currentImageIndex + 1;
+            info.textContent = `Photo ${num} | Image ${num}`;
+        }
+    }
+}
+
+// ============================================
+// DOWNLOAD FUNCTIONS
+// ============================================
+
+function downloadOriginal(imageNumber) {
+    const link = document.createElement('a');
+    link.href = `${ORIGINAL_FOLDER}/${imageNumber}.JPG`;
+    link.download = `KC18_${imageNumber}.JPG`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showTempMessage(`⬇️ Downloading: Photo ${imageNumber}`);
+}
+
+function showTempMessage(message) {
+    const statsEl = document.getElementById('stats');
+    if (!statsEl) return;
+    const original = statsEl.textContent;
+    statsEl.textContent = message;
+    setTimeout(() => {
+        if (statsEl.textContent === message) {
+            statsEl.textContent = original;
+        }
+    }, 2000);
+}
+
+function showDownloadPopup() {
+    const popup = document.getElementById("popupOverlay");
+    if (popup) popup.style.display = "flex";
+}
+
+function confirmDownload() {
+    const popup = document.getElementById("popupOverlay");
+    if (popup) popup.style.display = "none";
+    
+    const selectedCards = document.querySelectorAll('.grid-card.selected');
+    const selectedImages = Array.from(selectedCards).map((card, idx) => idx + 1);
+    
+    if (selectedImages.length === 0) {
+        alert('Please select at least one image to download. Click on images to select them.');
+        return;
+    }
+    
+    selectedImages.forEach((imageNum, index) => {
+        setTimeout(() => {
+            const link = document.createElement('a');
+            link.href = `${ORIGINAL_FOLDER}/${imageNum}.JPG`;
+            link.download = `KC18_${imageNum}.JPG`;
+            link.click();
+        }, index * 200);
+    });
+    
+    showTempMessage(`📥 Downloading ${selectedImages.length} images...`);
+}
+
+function cancelDownload() {
+    const popup = document.getElementById("popupOverlay");
+    if (popup) popup.style.display = "none";
+}
+
+function downloadAllOriginals() {
+    const cards = document.querySelectorAll('.grid-card');
+    cards.forEach(card => {
+        card.classList.add('selected');
+    });
+    showDownloadPopup();
+}
+
+// ============================================
+// HELP POPUP
+// ============================================
+
+function showHelpPopup() {
+    const popup = document.getElementById("helpPopupOverlay");
+    if (popup) popup.style.display = "flex";
+}
+
+function closeHelpPopup() {
+    const popup = document.getElementById("helpPopupOverlay");
+    if (popup) popup.style.display = "none";
+}
+
+// ============================================
+// AUTO-PLAY FUNCTIONALITY
+// ============================================
+
+function initAudio() {
     try {
-        const res = await fetch(url, { method: "HEAD" });
-        return res.status === 200;
-    } catch {
-        return false;
+        audio = document.getElementById("bg-music");
+        if (audio) {
+            audio.loop = true;
+            audio.volume = 0.5;
+        }
+    } catch (e) {
+        console.log('Audio init failed:', e);
     }
 }
 
-async function validateAndLoad() {
-    statusBox.textContent = "Checking folder…";
-
-    // test first file to verify folder exists
-    const first = `${LOW_QUALITY_FOLDER}/1.jpg`;
-    const ok = await fileExists(first);
-
-    if (!ok) {
-        statusBox.textContent =
-            `❌ Missing folder "${LOW_QUALITY_FOLDER}/" or image "1.jpg"`;
-        statusBox.style.color = "red";
-        return;
-    }
-
-    statusBox.textContent = "Folder OK ✓ Checking full list…";
-
-    let missing = [];
-    for (let i = 1; i <= TOTAL_IMAGES; i++) {
-        const img = `${LOW_QUALITY_FOLDER}/${i}.jpg`;
-        const exists = await fileExists(img);
-        if (!exists) missing.push(i);
-    }
-
-    if (missing.length > 0) {
-        statusBox.innerHTML =
-            `❌ Missing ${missing.length} images:<br>${missing.join(", ")}`;
-        statusBox.style.color = "red";
-        return;
-    }
-
-    // Load gallery
-    statusBox.classList.add("hidden");
-    gallery.classList.remove("hidden");
-
-    for (let i = 1; i <= TOTAL_IMAGES; i++) {
-        const el = document.createElement("img");
-        el.src = `${LOW_QUALITY_FOLDER}/${i}.jpg`;
-        el.loading = "lazy";
-        gallery.appendChild(el);
+function startMusic() {
+    if (audio) {
+        audio.play().catch(e => console.log('Audio play blocked:', e));
     }
 }
 
-validateAndLoad();
+function stopMusic() {
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+    }
+}
+
+function startAutoPlay() {
+    if (autoPlayInterval) clearInterval(autoPlayInterval);
+    if (images.length === 0) return;
+    
+    isAutoPlaying = true;
+    startMusic();
+    openModal(images[0]);
+    currentImageIndex = 0;
+    
+    autoPlayInterval = setInterval(() => {
+        nextImage();
+    }, 4000);
+    
+    const statsEl = document.getElementById('stats');
+    if (statsEl) statsEl.textContent = `🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18`;
+}
+
+function stopAutoPlay() {
+    if (autoPlayInterval) {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = null;
+    }
+    isAutoPlaying = false;
+    stopMusic();
+    closeModal();
+    updateStats();
+}
+
+// ============================================
+// HEADER IMAGE LOADING
+// ============================================
+
+function loadHeaderImage() {
+    const heroImg = document.getElementById('heroImage');
+    if (!heroImg) return;
+    
+    // Direct path like your old code
+    heroImg.src = `${ORIGINAL_FOLDER}/${HEADER_IMAGE_BASE}.JPG`;
+    heroImg.onerror = () => {
+        // Try LQ folder if original fails
+        heroImg.src = `${LOW_QUALITY_FOLDER}/${HEADER_IMAGE_BASE}.JPG`;
+        heroImg.onerror = () => {
+            heroImg.style.display = 'none';
+        };
+    };
+}
+
+// ============================================
+// SORT FUNCTIONALITY
+// ============================================
+
+function sortImages(sortType) {
+    const grid = document.getElementById('imageGrid');
+    if (!grid) return;
+    
+    const cards = Array.from(grid.children);
+    
+    cards.sort((a, b) => {
+        const numA = parseInt(a.querySelector('.card-date')?.textContent.match(/\d+/)?.[0] || 0);
+        const numB = parseInt(b.querySelector('.card-date')?.textContent.match(/\d+/)?.[0] || 0);
+        
+        switch (sortType) {
+            case 'date-oldest':
+                return numA - numB;
+            case 'date-newest':
+                return numB - numA;
+            case 'name-asc':
+                return numA - numB;
+            case 'name-desc':
+                return numB - numA;
+            default:
+                return 0;
+        }
+    });
+    
+    cards.forEach(card => grid.appendChild(card));
+}
+
+// ============================================
+// FLOATING BUTTONS (Draggable)
+// ============================================
+
+let isDraggingDownloadButton = false;
+let isDraggingHelpButton = false;
+
+function makeButtonMovable(button, isDraggingFlag) {
+    if (!button) return;
+    
+    let offsetX, offsetY;
+    
+    button.addEventListener("mousedown", (e) => {
+        window[isDraggingFlag] = true;
+        offsetX = e.clientX - button.offsetLeft;
+        offsetY = e.clientY - button.offsetTop;
+        button.style.transition = "none";
+        e.preventDefault();
+    });
+    
+    window.addEventListener("mousemove", (e) => {
+        if (window[isDraggingFlag]) {
+            let newLeft = e.clientX - offsetX;
+            let newTop = e.clientY - offsetY;
+            
+            newLeft = Math.max(0, Math.min(window.innerWidth - button.offsetWidth, newLeft));
+            newTop = Math.max(0, Math.min(window.innerHeight - button.offsetHeight, newTop));
+            
+            button.style.left = `${newLeft}px`;
+            button.style.top = `${newTop}px`;
+        }
+    });
+    
+    window.addEventListener("mouseup", () => {
+        if (window[isDraggingFlag]) {
+            window[isDraggingFlag] = false;
+            button.style.transition = "background-color 0.3s ease, box-shadow 0.3s ease";
+        }
+    });
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+
+function bindEvents() {
+    // Modal close events
+    const modal = document.getElementById("fullscreenModal");
+    const closeBtn = document.getElementById("fullscreenClose");
+    const prevBtn = document.getElementById("fullscreenPrev");
+    const nextBtn = document.getElementById("fullscreenNext");
+    
+    if (closeBtn) closeBtn.addEventListener("click", stopAutoPlay);
+    if (prevBtn) prevBtn.addEventListener("click", () => {
+        prevImage();
+        if (autoPlayInterval) {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = setInterval(() => nextImage(), 4000);
+        }
+    });
+    if (nextBtn) nextBtn.addEventListener("click", () => {
+        nextImage();
+        if (autoPlayInterval) {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = setInterval(() => nextImage(), 4000);
+        }
+    });
+    
+    if (modal) {
+        modal.addEventListener("click", function (event) {
+            if (event.target === modal) stopAutoPlay();
+        });
+    }
+    
+    // Keyboard navigation
+    window.addEventListener("keydown", function (event) {
+        const modal = document.getElementById("fullscreenModal");
+        if (modal && modal.classList.contains("active")) {
+            if (event.key === "ArrowLeft") {
+                prevImage();
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = setInterval(() => nextImage(), 4000);
+                }
+            } else if (event.key === "ArrowRight") {
+                nextImage();
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = setInterval(() => nextImage(), 4000);
+                }
+            } else if (event.key === "Escape") {
+                stopAutoPlay();
+            }
+        }
+    });
+    
+    // Swipe gestures
+    let touchstartX = 0;
+    let touchendX = 0;
+    
+    if (modal) {
+        modal.addEventListener('touchstart', function (event) {
+            touchstartX = event.changedTouches[0].screenX;
+        });
+        
+        modal.addEventListener('touchend', function (event) {
+            touchendX = event.changedTouches[0].screenX;
+            if (touchendX < touchstartX - 50) {
+                nextImage();
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = setInterval(() => nextImage(), 4000);
+                }
+            }
+            if (touchendX > touchstartX + 50) {
+                prevImage();
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = setInterval(() => nextImage(), 4000);
+                }
+            }
+        });
+    }
+    
+    // Sort buttons
+    const sortBtns = document.querySelectorAll('.sort-btn');
+    sortBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sortType = btn.getAttribute('data-sort');
+            if (sortType) {
+                sortBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                sortImages(sortType);
+                if (isAutoPlaying) stopAutoPlay();
+            }
+        });
+    });
+    
+    // Control buttons
+    const autoPlayBtn = document.getElementById('autoPlayBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    
+    if (autoPlayBtn) autoPlayBtn.addEventListener('click', startAutoPlay);
+    if (downloadAllBtn) downloadAllBtn.addEventListener('click', downloadAllOriginals);
+    if (refreshBtn) refreshBtn.addEventListener('click', () => location.reload());
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+function init() {
+    // Show loading bar
+    const loadingBar = document.getElementById('loadingBar');
+    if (loadingBar) {
+        loadingBar.style.display = 'block';
+        loadingBar.style.opacity = '1';
+        const progressBar = document.getElementById('loadingProgress');
+        if (progressBar) progressBar.style.width = '30%';
+    }
+    
+    bindEvents();
+    loadHeaderImage();
+    displayPhotos();
+    initAudio();
+    
+    // Setup floating buttons
+    const floatingDownloadButton = document.getElementById('floating-download-button');
+    const floatingHelpButton = document.getElementById('floating-help-button');
+    
+    if (floatingDownloadButton) {
+        makeButtonMovable(floatingDownloadButton, 'isDraggingDownloadButton');
+        floatingDownloadButton.addEventListener('click', showDownloadPopup);
+    }
+    
+    if (floatingHelpButton) {
+        makeButtonMovable(floatingHelpButton, 'isDraggingHelpButton');
+        floatingHelpButton.addEventListener('click', showHelpPopup);
+    }
+}
+
+// Start when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
 </script>
 
 </body>
