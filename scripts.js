@@ -1,6 +1,7 @@
 // ============================================
-// KC@18 GALLERY - Optimized Red & Black Theme
-// Features: Fast loading, notifications, cache, fixed drag, double-click mobile, auto-play optimized
+// KC@18 GALLERY - Complete Optimized Version
+// Features: Fast loading, notifications, cache, draggable buttons, 
+// Auto-play with pause, spacebar pause, long-press for mobile, swipe navigation
 // ============================================
 
 // Configuration
@@ -18,6 +19,7 @@ let images = [];
 let currentImageIndex = 0;
 let autoPlayInterval = null;
 let isAutoPlaying = false;
+let isPaused = false;
 let audio = null;
 let clickTimeout = null;
 let db = null;
@@ -26,6 +28,8 @@ let isDraggingDownloadButton = false;
 let isDraggingHelpButton = false;
 let dragStartX = 0;
 let dragStartY = 0;
+let longPressTimer = null;
+let isLongPressing = false;
 
 // ============================================
 // NOTIFICATION SYSTEM - Red & Black Theme
@@ -126,6 +130,9 @@ style.textContent = `
         transform: scale(1.1);
         box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
     }
+    .floating-button.hidden {
+        display: none !important;
+    }
     .fullscreen-modal.active {
         display: flex;
         animation: fadeIn 0.3s ease;
@@ -134,8 +141,31 @@ style.textContent = `
         from { opacity: 0; }
         to { opacity: 1; }
     }
+    /* Long press indicator */
+    .grid-card.long-press {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
 `;
 document.head.appendChild(style);
+
+// ============================================
+// FLOATING BUTTONS VISIBILITY CONTROL
+// ============================================
+
+function hideFloatingButtons() {
+    const downloadBtn = document.getElementById('floating-download-button');
+    const helpBtn = document.getElementById('floating-help-button');
+    if (downloadBtn) downloadBtn.classList.add('hidden');
+    if (helpBtn) helpBtn.classList.add('hidden');
+}
+
+function showFloatingButtons() {
+    const downloadBtn = document.getElementById('floating-download-button');
+    const helpBtn = document.getElementById('floating-help-button');
+    if (downloadBtn) downloadBtn.classList.remove('hidden');
+    if (helpBtn) helpBtn.classList.remove('hidden');
+}
 
 // ============================================
 // INDEXEDDB FUNCTIONS
@@ -228,7 +258,7 @@ async function loadImagesInParallel(startIndex, endIndex, onProgress) {
 }
 
 // ============================================
-// DISPLAY PHOTOS
+// DISPLAY PHOTOS WITH LONG PRESS SUPPORT
 // ============================================
 
 async function displayPhotos() {
@@ -272,13 +302,60 @@ async function displayPhotos() {
         card.addEventListener('dblclick', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            clearLongPress();
             currentImageIndex = i - 1;
             openModal(images[currentImageIndex], false);
+        });
+
+        // Long press for mobile (hold to maximize)
+        card.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            longPressTimer = setTimeout(() => {
+                isLongPressing = true;
+                card.classList.add('long-press');
+                // Vibrate if supported
+                if (navigator.vibrate) navigator.vibrate(50);
+                currentImageIndex = i - 1;
+                openModal(images[currentImageIndex], false);
+                clearLongPress();
+            }, 500);
+        });
+        
+        card.addEventListener('touchmove', () => {
+            clearLongPress();
+        });
+        
+        card.addEventListener('touchend', () => {
+            clearLongPress();
+        });
+        
+        // Mouse long press for desktop (hold to maximize)
+        card.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            longPressTimer = setTimeout(() => {
+                isLongPressing = true;
+                card.classList.add('long-press');
+                currentImageIndex = i - 1;
+                openModal(images[currentImageIndex], false);
+                clearLongPress();
+            }, 500);
+        });
+        
+        card.addEventListener('mousemove', () => {
+            if (longPressTimer) clearLongPress();
+        });
+        
+        card.addEventListener('mouseup', () => {
+            clearLongPress();
         });
 
         // Single click to select/deselect
         card.addEventListener('click', (e) => {
             if (e.target.classList.contains('download-card-btn')) return;
+            if (isLongPressing) {
+                isLongPressing = false;
+                return;
+            }
             clearTimeout(clickTimeout);
             clickTimeout = setTimeout(() => card.classList.toggle('selected'), 200);
         });
@@ -332,26 +409,52 @@ async function displayPhotos() {
     }, 1000);
 }
 
+function clearLongPress() {
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+    document.querySelectorAll('.grid-card.long-press').forEach(card => {
+        card.classList.remove('long-press');
+    });
+    isLongPressing = false;
+}
+
 function updateStats() {
     const statsEl = document.getElementById('stats');
     const imageCountEl = document.getElementById('imageCount');
-    if (statsEl) statsEl.textContent = `📸 ${TOTAL_IMAGES} images • Click to select`;
+    if (statsEl) statsEl.textContent = `📸 ${TOTAL_IMAGES} images • Click to select • Hold for fullscreen`;
     if (imageCountEl) imageCountEl.textContent = `${TOTAL_IMAGES} Moments Captured`;
 }
 
 // ============================================
-// MODAL FUNCTIONS
+// MODAL FUNCTIONS WITH BUTTON HIDE/SHOW
 // ============================================
 
 function openModal(imageSrc, fromAutoPlay = false) {
     const modal = document.getElementById('fullscreenModal');
     const modalImg = document.getElementById('fullscreenImage');
     const info = document.getElementById('fullscreenInfo');
+    const prevBtn = document.getElementById('fullscreenPrev');
+    const nextBtn = document.getElementById('fullscreenNext');
+    
     if (!modal || !modalImg) return;
 
     modal.classList.add('active');
     modalImg.src = imageSrc;
     if (info) info.textContent = `Photo ${currentImageIndex + 1} of ${TOTAL_IMAGES}`;
+    
+    // Hide floating buttons when modal is open
+    hideFloatingButtons();
+    
+    // Hide navigation buttons during auto-play
+    if (fromAutoPlay || isAutoPlaying) {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+    } else {
+        if (prevBtn) prevBtn.style.display = 'flex';
+        if (nextBtn) nextBtn.style.display = 'flex';
+    }
     
     // If manually opened while auto-play is active, stop auto-play without notification
     if (!fromAutoPlay && isAutoPlaying) {
@@ -361,7 +464,17 @@ function openModal(imageSrc, fromAutoPlay = false) {
 
 function closeModal(fromAutoPlay = false) {
     const modal = document.getElementById('fullscreenModal');
+    const prevBtn = document.getElementById('fullscreenPrev');
+    const nextBtn = document.getElementById('fullscreenNext');
+    
     if (modal) modal.classList.remove('active');
+    
+    // Restore floating buttons when modal closes
+    showFloatingButtons();
+    
+    // Restore navigation buttons when closing
+    if (prevBtn) prevBtn.style.display = 'flex';
+    if (nextBtn) nextBtn.style.display = 'flex';
     
     // Only stop auto-play if closing manually while auto-play is active
     if (!fromAutoPlay && isAutoPlaying) {
@@ -370,22 +483,124 @@ function closeModal(fromAutoPlay = false) {
 }
 
 function nextImage() {
-    currentImageIndex = (currentImageIndex + 1) % images.length;
-    const modalImg = document.getElementById('fullscreenImage');
-    const info = document.getElementById('fullscreenInfo');
-    if (modalImg) {
-        modalImg.src = images[currentImageIndex];
-        if (info) info.textContent = `Photo ${currentImageIndex + 1} of ${TOTAL_IMAGES}`;
+    if (!isPaused) {
+        currentImageIndex = (currentImageIndex + 1) % images.length;
+        const modalImg = document.getElementById('fullscreenImage');
+        const info = document.getElementById('fullscreenInfo');
+        if (modalImg) {
+            modalImg.src = images[currentImageIndex];
+            if (info) info.textContent = `Photo ${currentImageIndex + 1} of ${TOTAL_IMAGES}`;
+        }
     }
 }
 
 function prevImage() {
-    currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
-    const modalImg = document.getElementById('fullscreenImage');
-    const info = document.getElementById('fullscreenInfo');
-    if (modalImg) {
-        modalImg.src = images[currentImageIndex];
-        if (info) info.textContent = `Photo ${currentImageIndex + 1} of ${TOTAL_IMAGES}`;
+    if (!isPaused) {
+        currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+        const modalImg = document.getElementById('fullscreenImage');
+        const info = document.getElementById('fullscreenInfo');
+        if (modalImg) {
+            modalImg.src = images[currentImageIndex];
+            if (info) info.textContent = `Photo ${currentImageIndex + 1} of ${TOTAL_IMAGES}`;
+        }
+    }
+}
+
+// ============================================
+// AUTO-PLAY FUNCTIONALITY WITH PAUSE
+// ============================================
+
+function initAudio() {
+    audio = document.getElementById('bg-music');
+    if (audio) {
+        audio.loop = true;
+        audio.volume = 0.5;
+    }
+}
+
+function startMusic() {
+    if (audio) audio.play().catch(() => {});
+}
+
+function stopMusic() {
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+    }
+}
+
+function pauseAutoPlay() {
+    if (isAutoPlaying && !isPaused) {
+        isPaused = true;
+        if (autoPlayInterval) {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = null;
+        }
+        if (audio) audio.pause();
+        showNotification('⏸️ Auto-Play Paused', 'Click play to resume slideshow • Press SPACE to resume', 'info', 2000);
+        document.getElementById('stats').textContent = '⏸️ AUTO-PLAY PAUSED • Press ▶ or SPACE to resume';
+        
+        // Show navigation buttons when paused
+        const prevBtn = document.getElementById('fullscreenPrev');
+        const nextBtn = document.getElementById('fullscreenNext');
+        if (prevBtn) prevBtn.style.display = 'flex';
+        if (nextBtn) nextBtn.style.display = 'flex';
+    }
+}
+
+function resumeAutoPlay() {
+    if (isAutoPlaying && isPaused) {
+        isPaused = false;
+        autoPlayInterval = setInterval(nextImage, 4000);
+        if (audio) audio.play().catch(() => {});
+        showNotification('▶️ Auto-Play Resumed', 'Slideshow continues • Press SPACE to pause', 'success', 2000);
+        document.getElementById('stats').textContent = '🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18';
+        
+        // Hide navigation buttons when resumed
+        const prevBtn = document.getElementById('fullscreenPrev');
+        const nextBtn = document.getElementById('fullscreenNext');
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+    }
+}
+
+function startAutoPlay() {
+    if (autoPlayInterval) clearInterval(autoPlayInterval);
+    if (images.length === 0) return;
+
+    isAutoPlaying = true;
+    isPaused = false;
+    startMusic();
+    openModal(images[0], true);
+    currentImageIndex = 0;
+
+    autoPlayInterval = setInterval(nextImage, 4000);
+    showNotification('🎬 Auto-Play Started', 'Slideshow active • Press SPACE to pause', 'success', 2000);
+    document.getElementById('stats').textContent = '🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18 • Press SPACE to pause';
+}
+
+function stopAutoPlay(showNotif = true) {
+    const prevBtn = document.getElementById('fullscreenPrev');
+    const nextBtn = document.getElementById('fullscreenNext');
+    
+    if (autoPlayInterval) {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = null;
+    }
+    
+    const wasAutoPlaying = isAutoPlaying;
+    isAutoPlaying = false;
+    isPaused = false;
+    stopMusic();
+    closeModal(true);
+    updateStats();
+    
+    // Restore navigation buttons when auto-play stops
+    if (prevBtn) prevBtn.style.display = 'flex';
+    if (nextBtn) nextBtn.style.display = 'flex';
+    
+    if (wasAutoPlaying && showNotif) {
+        showNotification('⏹️ Auto-Play Stopped', 'Slideshow has been stopped', 'info', 1500);
     }
 }
 
@@ -449,60 +664,6 @@ function showHelpPopup() {
 
 function closeHelpPopup() {
     document.getElementById('helpPopupOverlay').style.display = 'none';
-}
-
-// ============================================
-// AUTO-PLAY FUNCTIONALITY - OPTIMIZED
-// ============================================
-
-function initAudio() {
-    audio = document.getElementById('bg-music');
-    if (audio) {
-        audio.loop = true;
-        audio.volume = 0.5;
-    }
-}
-
-function startMusic() {
-    if (audio) audio.play().catch(() => {});
-}
-
-function stopMusic() {
-    if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-    }
-}
-
-function startAutoPlay() {
-    if (autoPlayInterval) clearInterval(autoPlayInterval);
-    if (images.length === 0) return;
-
-    isAutoPlaying = true;
-    startMusic();
-    openModal(images[0], true);
-    currentImageIndex = 0;
-
-    autoPlayInterval = setInterval(nextImage, 4000);
-    showNotification('🎬 Auto-Play Started', 'Playing slideshow with One Direction - 18', 'success', 2000);
-    document.getElementById('stats').textContent = '🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18';
-}
-
-function stopAutoPlay(showNotif = true) {
-    if (autoPlayInterval) {
-        clearInterval(autoPlayInterval);
-        autoPlayInterval = null;
-    }
-    
-    const wasAutoPlaying = isAutoPlaying;
-    isAutoPlaying = false;
-    stopMusic();
-    closeModal(true);
-    updateStats();
-    
-    if (wasAutoPlaying && showNotif) {
-        showNotification('⏹️ Auto-Play Stopped', 'Slideshow has been stopped', 'info', 1500);
-    }
 }
 
 // ============================================
@@ -798,24 +959,22 @@ function bindEvents() {
     if (prevBtn) prevBtn.addEventListener('click', () => {
         if (!isAutoPlaying) {
             prevImage();
+        } else if (isAutoPlaying && !isPaused) {
+            pauseAutoPlay();
+            prevImage();
         } else {
             prevImage();
-            if (autoPlayInterval) {
-                clearInterval(autoPlayInterval);
-                autoPlayInterval = setInterval(nextImage, 4000);
-            }
         }
     });
     
     if (nextBtn) nextBtn.addEventListener('click', () => {
         if (!isAutoPlaying) {
             nextImage();
+        } else if (isAutoPlaying && !isPaused) {
+            pauseAutoPlay();
+            nextImage();
         } else {
             nextImage();
-            if (autoPlayInterval) {
-                clearInterval(autoPlayInterval);
-                autoPlayInterval = setInterval(nextImage, 4000);
-            }
         }
     });
 
@@ -829,39 +988,87 @@ function bindEvents() {
         }
     });
 
+    // Keyboard navigation with SPACE for pause/resume
     window.addEventListener('keydown', (e) => {
         const modalEl = document.getElementById('fullscreenModal');
         if (modalEl?.classList.contains('active')) {
             if (e.key === 'ArrowLeft') {
-                if (!isAutoPlaying) prevImage();
-                else { prevImage(); if (autoPlayInterval) { clearInterval(autoPlayInterval); autoPlayInterval = setInterval(nextImage, 4000); } }
+                e.preventDefault();
+                if (!isAutoPlaying) {
+                    prevImage();
+                } else if (isAutoPlaying && !isPaused) {
+                    pauseAutoPlay();
+                    prevImage();
+                } else {
+                    prevImage();
+                }
             } else if (e.key === 'ArrowRight') {
-                if (!isAutoPlaying) nextImage();
-                else { nextImage(); if (autoPlayInterval) { clearInterval(autoPlayInterval); autoPlayInterval = setInterval(nextImage, 4000); } }
+                e.preventDefault();
+                if (!isAutoPlaying) {
+                    nextImage();
+                } else if (isAutoPlaying && !isPaused) {
+                    pauseAutoPlay();
+                    nextImage();
+                } else {
+                    nextImage();
+                }
+            } else if (e.key === ' ' || e.key === 'Space') {
+                e.preventDefault();
+                if (isAutoPlaying && !isPaused) {
+                    pauseAutoPlay();
+                } else if (isAutoPlaying && isPaused) {
+                    resumeAutoPlay();
+                }
             } else if (e.key === 'Escape') {
-                if (isAutoPlaying) stopAutoPlay(true);
-                else closeModal(false);
+                if (isAutoPlaying) {
+                    stopAutoPlay(true);
+                } else {
+                    closeModal(false);
+                }
             }
         }
     });
 
-    let touchstartX = 0;
+    // Mobile swipe gestures with improved detection
+    let touchstartX = 0, touchstartY = 0;
     if (modal) {
-        modal.addEventListener('touchstart', (e) => { touchstartX = e.changedTouches[0].screenX; });
+        modal.addEventListener('touchstart', (e) => { 
+            touchstartX = e.changedTouches[0].screenX;
+            touchstartY = e.changedTouches[0].screenY;
+        });
         modal.addEventListener('touchend', (e) => {
-            const diff = e.changedTouches[0].screenX - touchstartX;
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) {
-                    if (!isAutoPlaying) prevImage();
-                    else { prevImage(); if (autoPlayInterval) { clearInterval(autoPlayInterval); autoPlayInterval = setInterval(nextImage, 4000); } }
+            const diffX = e.changedTouches[0].screenX - touchstartX;
+            const diffY = e.changedTouches[0].screenY - touchstartY;
+            // Only trigger if horizontal swipe is dominant
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                if (diffX > 0) {
+                    // Swipe right -> previous
+                    if (!isAutoPlaying) {
+                        prevImage();
+                    } else if (isAutoPlaying && !isPaused) {
+                        pauseAutoPlay();
+                        prevImage();
+                    } else {
+                        prevImage();
+                    }
                 } else {
-                    if (!isAutoPlaying) nextImage();
-                    else { nextImage(); if (autoPlayInterval) { clearInterval(autoPlayInterval); autoPlayInterval = setInterval(nextImage, 4000); } }
+                    // Swipe left -> next
+                    if (!isAutoPlaying) {
+                        nextImage();
+                    } else if (isAutoPlaying && !isPaused) {
+                        pauseAutoPlay();
+                        nextImage();
+                    } else {
+                        nextImage();
+                    }
                 }
+                // Haptic feedback if supported
+                if (navigator.vibrate) navigator.vibrate(30);
             }
         });
     }
 
+    // Sort buttons
     document.querySelectorAll('.sort-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const sortType = btn.dataset.sort;
@@ -874,6 +1081,7 @@ function bindEvents() {
         });
     });
 
+    // Control buttons
     document.getElementById('autoPlayBtn')?.addEventListener('click', startAutoPlay);
     document.getElementById('downloadAllBtn')?.addEventListener('click', downloadAllOriginals);
     document.getElementById('refreshBtn')?.addEventListener('click', () => location.reload());
