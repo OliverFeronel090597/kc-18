@@ -1,65 +1,25 @@
 // ============================================
-// FIXED CONFIGURATION - Supports both naming conventions
+// KC@18 GALLERY - Numbered Images Version
+// Compatible with GitHub Pages
+// ============================================
+
+// ============================================
+// CONFIGURATION - Using Numbered Images
 // ============================================
 const LOW_QUALITY_FOLDER = 'KCat18_LQ';
 const ORIGINAL_FOLDER = 'KCat18';
-const HEADER_IMAGE_BASE = '_DSC0226';
+const HEADER_FOLDER = 'header'
+const HEADER_IMAGE_BASE = '_DSC0226'; // Change this to your header image number (e.g., '1', '22', etc.)
 const MUSIC_FILE = 'music/One Direction - 18 (Lyrics) (1).mp3';
 
-// Choose your image naming method:
-// OPTION 1: Numbered images (1.jpg, 2.jpg, etc.) - Uncomment below
-// const USE_NUMBERED_IMAGES = true;
-// const TOTAL_NUMBERED_IMAGES = 203;
-// const baseImageNames = Array.from({length: TOTAL_NUMBERED_IMAGES}, (_, i) => String(i + 1));
+// Numbered images configuration
+const USE_NUMBERED_IMAGES = true;
+const TOTAL_NUMBERED_IMAGES = 203; // Change this to match your actual number of images
 
-// OPTION 2: Named images (_DSCxxxx) - Using your existing list
-const USE_NUMBERED_IMAGES = false;
-const baseImageNames = [
-    '_DSC0031', '_DSC0032', '_DSC0033', '_DSC0034', '_DSC0035',
-    '_DSC0036', '_DSC0037', '_DSC0039', '_DSC0044', '_DSC0045',
-    '_DSC0052', '_DSC0054', '_DSC0056', '_DSC0057', '_DSC0058',
-    '_DSC0059', '_DSC0060', '_DSC0068', '_DSC0069', '_DSC0070',
-    '_DSC0071', '_DSC0072', '_DSC0074', '_DSC0075', '_DSC0092',
-    '_DSC0093', '_DSC0094', '_DSC0095', '_DSC0096', '_DSC0097',
-    '_DSC0098', '_DSC0099', '_DSC0100', '_DSC0101', '_DSC0102',
-    '_DSC0103', '_DSC0104', '_DSC0105', '_DSC0106', '_DSC0107',
-    '_DSC0108', '_DSC0120', '_DSC0121', '_DSC0122', '_DSC0123',
-    '_DSC0124', '_DSC0126', '_DSC0127', '_DSC0128', '_DSC0129',
-    '_DSC0130', '_DSC0131', '_DSC0132', '_DSC0133', '_DSC0134',
-    '_DSC0135', '_DSC0136', '_DSC0149', '_DSC0150', '_DSC0151',
-    '_DSC0173', '_DSC0177', '_DSC0184', '_DSC0185', '_DSC0186',
-    '_DSC0189', '_DSC0190', '_DSC0195', '_DSC0219', '_DSC0224',
-    '_DSC0225', '_DSC0226', '_DSC0229', '_DSC0230', '_DSC0232',
-    '_DSC0234', '_DSC0235', '_DSC0241', '_DSC0244', '_DSC0246',
-    '_DSC0247', '_DSC0248', '_DSC0260', '_DSC0261', '_DSC0262',
-    '_DSC0267', '_DSC0351', '_DSC0352', '_DSC0356', '_DSC0358',
-    '_DSC0359', '_DSC0360', '_DSC0361', '_DSC0385', '_DSC0386',
-    '_DSC0387', '_DSC0393', '_DSC0394', '_DSC0395', '_DSC0396',
-    '_DSC0397', '_DSC0398', '_DSC0424', '_DSC0425', '_DSC0426',
-    '_DSC0429', '_DSC0430', '_DSC0439', '_DSC0440', '_DSC0441',
-    '_DSC0442', '_DSC0443', '_DSC0444', '_DSC0446', '_DSC0448',
-    '_DSC0449', '_DSC0450', '_DSC0454', '_DSC0455', '_DSC0456',
-    '_DSC0457', '_DSC0458', '_DSC0495', '_DSC0496', '_DSC0497',
-    '_DSC0499', '_DSC0500', '_DSC0501', '_DSC0506', '_DSC0507',
-    '_DSC0508', '_DSC0509', '_DSC0510', '_DSC0511', '_DSC0512',
-    '_DSC0514', '_DSC0515', '_DSC0516', '_DSC0517', '_DSC0518',
-    '_DSC0519', '_DSC0520', '_DSC0521', '_DSC0523', '_DSC0532',
-    '_DSC0533', '_DSC0542', '_DSC0545', '_DSC0553', '_DSC0554',
-    '_DSC0556', '_DSC0562', '_DSC0563', '_DSC0564', '_DSC0566',
-    '_DSC0567', '_DSC0568', '_DSC0588', '_DSC0589', '_DSC0590',
-    '_DSC0596', '_DSC0597', '_DSC0598', '_DSC0599', '_DSC0605',
-    '_DSC0607', '_DSC0608', '_DSC0617', '_DSC0618', '_DSC0619',
-    '_DSC0623', '_DSC0624', '_DSC0625', '_DSC0626', '_DSC0629',
-    '_DSC0660', '_DSC0661', '_DSC0662', '_DSC0663', '_DSC0664',
-    '_DSC0665', '_DSC0666', '_DSC0667', '_DSC0669', '_DSC0670',
-    '_DSC0702', '_DSC0703', '_DSC0704', '_DSC0705', '_DSC0706',
-    '_DSC0709', '_DSC0710', '_DSC0711', '_DSC0712', '_DSC0723',
-    '_DSC0724', '_DSC0726', '_DSC0727', '_DSC0734', '_DSC0735',
-    '_DSC0736', '_DSC0743', '_DSC0747', '_DSC0748', '_DSC0751',
-    '_DSC0752'
-];
+// Generate image names automatically (1, 2, 3, etc.)
+const baseImageNames = Array.from({length: TOTAL_NUMBERED_IMAGES}, (_, i) => String(i + 1));
 
-// Supported extensions
+// Supported extensions - will try in this order
 const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG'];
 
 // Global state
@@ -76,24 +36,14 @@ let loadedImagesCount = 0;
 // ============================================
 
 function getImageNumber(filename) {
-    if (USE_NUMBERED_IMAGES) {
-        // For numbered images, extract number from filename
-        const match = filename.match(/(\d+)\./);
-        return match ? parseInt(match[1]) : 0;
-    } else {
-        // For DSC images, extract the number part
-        const match = filename.match(/_DSC(\d+)/i);
-        return match ? parseInt(match[1]) : 0;
-    }
+    // For numbered images, extract number from filename (e.g., "123.jpg" -> 123)
+    const match = filename.match(/(\d+)\./);
+    return match ? parseInt(match[1]) : 0;
 }
 
 function getDisplayDate(filename) {
     const num = getImageNumber(filename);
-    if (USE_NUMBERED_IMAGES) {
-        return `Photo ${num}`;
-    } else {
-        return `IMG-${String(num).slice(-4)}`;
-    }
+    return `Photo ${num}`;
 }
 
 // Check if image exists (promise-based)
@@ -109,14 +59,7 @@ function imageExists(url) {
 // Find valid path for a base name in a folder
 async function findImagePath(baseName, folder) {
     for (const ext of SUPPORTED_EXTENSIONS) {
-        let filename;
-        if (USE_NUMBERED_IMAGES) {
-            // For numbered images, baseName is already the number
-            filename = `${baseName}${ext}`;
-        } else {
-            // For named images
-            filename = `${baseName}${ext}`;
-        }
+        const filename = `${baseName}${ext}`;
         const url = `${folder}/${filename}`;
         const exists = await imageExists(url);
         if (exists) {
@@ -254,7 +197,7 @@ function displayImages(imagesArray) {
     if (progressBar) progressBar.style.width = '0%';
 
     if (imagesArray.length === 0) {
-        grid.innerHTML = '<div class="loading-state"><p>⚠️ No images found. Please check folder structure.</p><p style="font-size: 0.8rem; margin-top: 1rem;">Expected folders: KCat18_LQ/ and KCat18/ with JPG/PNG images</p></div>';
+        grid.innerHTML = '<div class="loading-state"><p>⚠️ No images found. Please check folder structure.</p><p style="font-size: 0.8rem; margin-top: 1rem;">Expected folders: KCat18_LQ/ and KCat18/ with numbered JPG/PNG images (1.jpg, 2.jpg, etc.)</p></div>';
         const statsEl = document.getElementById('stats');
         if (statsEl) statsEl.textContent = 'No images found';
         return;
@@ -271,10 +214,10 @@ function displayImages(imagesArray) {
         card.innerHTML = `
             <div class="card-image">
                 <div class="skeleton"></div>
-                <img data-src="${imageUrl}" alt="${image.name}" loading="lazy">
+                <img data-src="${imageUrl}" alt="Photo ${image.timestamp}" loading="lazy">
                 <div class="card-info">
                     <span class="card-date">📅 ${image.displayDate}</span>
-                    <span class="card-name">📷 ${image.name}</span>
+                    <span class="card-name">📷 Photo ${image.timestamp}</span>
                 </div>
                 <div class="card-overlay">
                     <button class="download-card-btn" onclick="event.stopPropagation(); window.downloadOriginal('${image.name}')">
@@ -314,10 +257,10 @@ async function loadHeaderImage() {
     if (!heroImg) return;
 
     // Try to find header image in original folder first, then LQ
-    let result = await findImagePath(HEADER_IMAGE_BASE, ORIGINAL_FOLDER);
-    if (!result) {
-        result = await findImagePath(HEADER_IMAGE_BASE, LOW_QUALITY_FOLDER);
-    }
+    let result = await findImagePath(HEADER_IMAGE_BASE, HEADER_FOLDER);
+    // if (!result) {
+    //     result = await findImagePath(HEADER_IMAGE_BASE, LOW_QUALITY_FOLDER);
+    // }
 
     if (result && result.url) {
         heroImg.src = result.url;
@@ -339,7 +282,7 @@ window.downloadOriginal = function (imageName) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showTempMessage(`⬇️ Downloading: ${imageName}`);
+    showTempMessage(`⬇️ Downloading: Photo ${getImageNumber(imageName)}`);
 };
 
 function downloadAllOriginals() {
@@ -380,7 +323,7 @@ function openFullscreen(index) {
     const info = document.getElementById('fullscreenInfo');
     if (img && info && images[currentIndex]) {
         img.src = images[currentIndex].lqPath;
-        info.textContent = `${images[currentIndex].name} | ${images[currentIndex].displayDate}`;
+        info.textContent = `${images[currentIndex].displayDate} | Photo ${images[currentIndex].timestamp}`;
     }
     if (modal) modal.classList.add('active');
 }
@@ -397,7 +340,7 @@ function nextFullscreen() {
     const info = document.getElementById('fullscreenInfo');
     if (img && info && images[currentIndex]) {
         img.src = images[currentIndex].lqPath;
-        info.textContent = `${images[currentIndex].name} | ${images[currentIndex].displayDate}`;
+        info.textContent = `${images[currentIndex].displayDate} | Photo ${images[currentIndex].timestamp}`;
     }
 }
 
@@ -408,7 +351,7 @@ function prevFullscreen() {
     const info = document.getElementById('fullscreenInfo');
     if (img && info && images[currentIndex]) {
         img.src = images[currentIndex].lqPath;
-        info.textContent = `${images[currentIndex].name} | ${images[currentIndex].displayDate}`;
+        info.textContent = `${images[currentIndex].displayDate} | Photo ${images[currentIndex].timestamp}`;
     }
 }
 

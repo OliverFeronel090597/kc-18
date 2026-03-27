@@ -2,8 +2,8 @@ from PIL import Image
 import os
 
 # Folders
-source_folder = r"KC@18"
-dest_folder = r"KC@18_LQ"
+source_folder = r"KCat18"
+dest_folder = r"KCat18_LQ"
 os.makedirs(dest_folder, exist_ok=True)
 
 # Supported formats
