@@ -1,7 +1,30 @@
+/* Prevent text selection globally */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Allow text selection in popups and help content (optional) */
+.popup-content,
+.help-content,
+.notification-container {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+/* Allow text in stats and badges (optional) */
+.stats,
+.hero-badge,
+.card-date,
+.card-name {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
 }
 
 body {
@@ -33,6 +56,7 @@ body {
     text-decoration: none;
     z-index: 100;
 }
+
 .skip-link:focus {
     top: 0;
 }
@@ -48,6 +72,7 @@ body {
     z-index: 1000;
     display: none;
 }
+
 .loading-progress {
     height: 100%;
     background: var(--primary-red);
@@ -77,9 +102,12 @@ body {
 }
 
 @keyframes slowZoom {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.05);
     }
@@ -112,6 +140,7 @@ body {
         opacity: 0;
         transform: translateY(-30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -132,9 +161,12 @@ body {
 }
 
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         text-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
     }
+
     50% {
         text-shadow: 0 0 40px rgba(220, 38, 38, 0.8);
     }
@@ -349,6 +381,7 @@ body {
     0% {
         background-position: 200% 0;
     }
+
     100% {
         background-position: -200% 0;
     }
@@ -460,6 +493,7 @@ body {
         opacity: 0;
         transform: scale(0.9);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -663,6 +697,7 @@ body {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
