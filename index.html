@@ -1,101 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>KC@18 - Debut Gallery</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
-<a href="#imageGrid" class="skip-link">Skip to gallery</a>
+    <a href="#imageGrid" class="skip-link">Skip to gallery</a>
 
-<div class="loading-bar" id="loadingBar">
-    <div class="loading-progress" id="loadingProgress"></div>
-</div>
-
-<div class="hero-section">
-    <img class="hero-image" id="heroImage" alt="KC@18 Debut">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-        <h1>KC@18</h1>
-        <p>A Debut to Remember (03-22-2026)</p>
-        <div class="hero-badge" id="imageCount">Loading...</div>
+    <div class="loading-bar" id="loadingBar">
+        <div class="loading-progress" id="loadingProgress"></div>
     </div>
-</div>
 
-<div class="controls-bar">
-    <div class="logo">❤️ KC@18 GALLERY</div>
-    <div class="button-group">
-        <button class="btn btn-primary" id="autoPlayBtn">▶ AUTO PLAY</button>
-        <button class="btn btn-primary" id="downloadAllBtn">📥 DOWNLOAD ALL</button>
-        <button class="btn btn-secondary" id="refreshBtn">🔄 REFRESH</button>
-    </div>
-    <div class="stats" id="stats">Loading gallery...</div>
-</div>
-
-<div class="sort-bar">
-    <span class="sort-label">SORT BY:</span>
-    <button class="sort-btn active" data-sort="date-oldest">📅 OLDEST FIRST</button>
-    <button class="sort-btn" data-sort="date-newest">📅 NEWEST FIRST</button>
-    <button class="sort-btn" data-sort="name-asc">🔤 NAME A-Z</button>
-    <button class="sort-btn" data-sort="name-desc">🔤 NAME Z-A</button>
-</div>
-
-<div class="grid-container">
-    <div class="image-grid" id="imageGrid">
-        <div class="loading-state">
-            <div class="spinner"></div>
-            <p>Loading KC@18 Gallery...</p>
+    <div class="hero-section">
+        <img class="hero-image" id="heroImage" alt="KC@18 Debut">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>KC@18</h1>
+            <p>A Debut to Remember (03-22-2026)</p>
+            <div class="hero-badge" id="imageCount">Loading...</div>
         </div>
     </div>
-</div>
 
-<div class="fullscreen-modal" id="fullscreenModal">
-    <div class="fullscreen-content">
-        <button class="fullscreen-close" id="fullscreenClose">✕</button>
-        <button class="fullscreen-nav fullscreen-prev" id="fullscreenPrev">◀</button>
-        <img class="fullscreen-image" id="fullscreenImage" alt="Full view">
-        <button class="fullscreen-nav fullscreen-next" id="fullscreenNext">▶</button>
-        <div class="fullscreen-info" id="fullscreenInfo"></div>
+    <div class="controls-bar">
+        <div class="logo">❤️ KC@18 GALLERY</div>
+        <div class="button-group">
+            <button class="btn btn-primary" id="autoPlayBtn">▶ AUTO PLAY</button>
+            <button class="btn btn-primary" id="downloadAllBtn">📥 DOWNLOAD ALL</button>
+            <button class="btn btn-secondary" id="refreshBtn">🔄 REFRESH</button>
+        </div>
+        <div class="stats" id="stats">Loading gallery...</div>
     </div>
-</div>
 
-<!-- Floating Buttons -->
-<!-- <button class="floating-button" id="floating-download-button">📥</button> -->
-<!-- <button class="floating-button" id="floating-help-button">❓</button> -->
-
-<!-- Popups -->
-<div id="popupOverlay" class="popup-overlay">
-    <div class="popup-content">
-        <h3>📥 Download Selected Images</h3>
-        <p>Are you sure you want to download all selected images?</p>
-        <button class="confirm-btn" onclick="confirmDownload()">Yes, Download</button>
-        <button class="cancel-btn" onclick="cancelDownload()">Cancel</button>
+    <div class="sort-bar">
+        <span class="sort-label">SORT BY:</span>
+        <button class="sort-btn active" data-sort="date-oldest">📅 OLDEST FIRST</button>
+        <button class="sort-btn" data-sort="date-newest">📅 NEWEST FIRST</button>
+        <button class="sort-btn" data-sort="name-asc">🔤 NAME A-Z</button>
+        <button class="sort-btn" data-sort="name-desc">🔤 NAME Z-A</button>
     </div>
-</div>
 
-<div id="helpPopupOverlay" class="popup-overlay">
-    <div class="popup-content">
-        <h3>📸 Gallery Help</h3>
-        <p><strong>📱 How to use:</strong></p>
-        <p>• <strong>Single click</strong> - Select/Deselect image (red border)</p>
-        <p>• <strong>Double click</strong> - Open fullscreen view</p>
-        <p>• <strong>Download button</strong> - Download selected images</p>
-        <p>• <strong>AUTO PLAY</strong> - Slideshow with music</p>
-        <p>• <strong>Drag buttons</strong> - Move floating buttons anywhere</p>
-        <p>• <strong>Arrow keys</strong> - Navigate in fullscreen</p>
-        <p>• <strong>Swipe</strong> - Left/right on mobile</p>
-        <p><strong>🎵 Music:</strong> One Direction - 18</p>
-        <button class="cancel-btn" onclick="closeHelpPopup()">Close</button>
+    <div class="grid-container">
+        <div class="image-grid" id="imageGrid">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Loading KC@18 Gallery...</p>
+            </div>
+        </div>
     </div>
-</div>
 
-<audio id="bg-music" loop>
-    <source src="music/One Direction - 18 (Lyrics) (1).mp3" type="audio/mpeg">
-</audio>
+    <div class="fullscreen-modal" id="fullscreenModal">
+        <div class="fullscreen-content">
+            <button class="fullscreen-close" id="fullscreenClose">✕</button>
+            <button class="fullscreen-nav fullscreen-prev" id="fullscreenPrev">◀</button>
+            <img class="fullscreen-image" id="fullscreenImage" alt="Full view">
+            <button class="fullscreen-nav fullscreen-next" id="fullscreenNext">▶</button>
+            <div class="fullscreen-info" id="fullscreenInfo"></div>
+        </div>
+    </div>
 
-<script src="scripts.js"></script>
+    <!-- Floating Buttons -->
+    <button class="floating-button" id="floating-download-button">📥</button>
+    <button class="floating-button" id="floating-help-button">❓</button>
+
+    <!-- Popups -->
+    <div id="popupOverlay" class="popup-overlay">
+        <div class="popup-content">
+            <h3>📥 Download Selected Images</h3>
+            <p>Are you sure you want to download all selected images?</p>
+            <button class="confirm-btn" onclick="confirmDownload()">Yes, Download</button>
+            <button class="cancel-btn" onclick="cancelDownload()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="helpPopupOverlay" class="popup-overlay">
+        <div class="popup-content">
+            <h3>📸 Gallery Help</h3>
+            <p><strong>📱 How to use:</strong></p>
+            <p>• <strong>Single click</strong> - Select/Deselect image (red border)</p>
+            <p>• <strong>Double click</strong> - Open fullscreen view</p>
+            <p>• <strong>Download button</strong> - Download selected images</p>
+            <p>• <strong>AUTO PLAY</strong> - Slideshow with music</p>
+            <p>• <strong>Drag buttons</strong> - Move floating buttons anywhere</p>
+            <p>• <strong>Arrow keys</strong> - Navigate in fullscreen</p>
+            <p>• <strong>Swipe</strong> - Left/right on mobile</p>
+            <p><strong>🎵 Music:</strong> One Direction - 18</p>
+            <button class="cancel-btn" onclick="closeHelpPopup()">Close</button>
+        </div>
+    </div>
+
+    <audio id="bg-music" loop>
+        <source src="music/One Direction - 18 (Lyrics) (1).mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="scripts.js"></script>
 </body>
+
 </html>

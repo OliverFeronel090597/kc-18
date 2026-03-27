@@ -1,6 +1,6 @@
 // ============================================
-// KC@18 GALLERY - Red & Black Theme (WITH INDEXEDDB CACHE)
-// Images are permanently cached for faster loading
+// KC@18 GALLERY - Enhanced with Fast Loading & Notifications
+// Features: Parallel loading, notifications, cache stats
 // ============================================
 
 // Configuration
@@ -11,6 +11,7 @@ const TOTAL_IMAGES = 203;
 const DB_NAME = 'KC18_Gallery';
 const DB_VERSION = 1;
 const STORE_NAME = 'images';
+const PARALLEL_LOAD_COUNT = 10; // Load 10 images at once
 
 // Global state
 let images = [];
@@ -20,12 +21,91 @@ let isAutoPlaying = false;
 let audio = null;
 let clickTimeout = null;
 let db = null;
+let loadingComplete = false;
+
+// ============================================
+// NOTIFICATION SYSTEM
+// ============================================
+
+function showNotification(title, message, type = 'info', duration = 3000) {
+    // Create notification element if it doesn't exist
+    let notificationContainer = document.getElementById('notification-container');
+    if (!notificationContainer) {
+        notificationContainer = document.createElement('div');
+        notificationContainer.id = 'notification-container';
+        notificationContainer.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 350px;
+        `;
+        document.body.appendChild(notificationContainer);
+    }
+    
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
+        color: white;
+        padding: 12px 16px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        animation: slideIn 0.3s ease;
+        cursor: pointer;
+        font-size: 14px;
+    `;
+    
+    notification.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 4px;">${title}</div>
+        <div style="font-size: 12px; opacity: 0.9;">${message}</div>
+    `;
+    
+    notification.onclick = () => notification.remove();
+    
+    notificationContainer.appendChild(notification);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, duration);
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+`;
+document.head.appendChild(style);
 
 // ============================================
 // INDEXEDDB FUNCTIONS
 // ============================================
 
-// Open IndexedDB database
 function openDatabase() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -38,7 +118,6 @@ function openDatabase() {
         
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
-            // Create object store for images
             if (!db.objectStoreNames.contains(STORE_NAME)) {
                 const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
                 store.createIndex('timestamp', 'timestamp');
@@ -47,7 +126,6 @@ function openDatabase() {
     });
 }
 
-// Check if image exists in cache
 function getCachedImage(imageId) {
     return new Promise((resolve, reject) => {
         if (!db) {
@@ -64,7 +142,6 @@ function getCachedImage(imageId) {
     });
 }
 
-// Save image to cache
 function saveImageToCache(imageId, imageUrl, blob) {
     return new Promise((resolve, reject) => {
         if (!db) {
@@ -87,49 +164,6 @@ function saveImageToCache(imageId, imageUrl, blob) {
     });
 }
 
-// Fetch and cache image
-async function loadImageWithCache(imageNumber, imageUrl) {
-    const imageId = `img_${imageNumber}`;
-    
-    // Check cache first
-    const cached = await getCachedImage(imageId);
-    
-    if (cached && cached.blob) {
-        // Return cached image as object URL
-        const blobUrl = URL.createObjectURL(cached.blob);
-        return { url: blobUrl, fromCache: true, imageId };
-    }
-    
-    // Download from network
-    try {
-        const response = await fetch(imageUrl);
-        if (!response.ok) throw new Error('Network error');
-        
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        
-        // Save to cache
-        await saveImageToCache(imageId, imageUrl, blob);
-        
-        return { url: blobUrl, fromCache: false, imageId };
-    } catch (error) {
-        console.error(`Failed to load image ${imageNumber}:`, error);
-        return null;
-    }
-}
-
-// Clear old cache (optional - call this to free up space)
-async function clearOldCache() {
-    if (!db) return;
-    
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    store.clear();
-    
-    console.log('Cache cleared');
-}
-
-// Get cache stats
 async function getCacheStats() {
     if (!db) return { total: 0, size: 0 };
     
@@ -146,7 +180,66 @@ async function getCacheStats() {
 }
 
 // ============================================
-// DISPLAY PHOTOS WITH CACHE
+// FAST PARALLEL IMAGE LOADING
+// ============================================
+
+async function loadImageWithCache(imageNumber, imageUrl) {
+    const imageId = `img_${imageNumber}`;
+    
+    // Check cache first
+    const cached = await getCachedImage(imageId);
+    
+    if (cached && cached.blob) {
+        const blobUrl = URL.createObjectURL(cached.blob);
+        return { url: blobUrl, fromCache: true, imageId };
+    }
+    
+    // Download from network
+    try {
+        const response = await fetch(imageUrl);
+        if (!response.ok) throw new Error('Network error');
+        
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // Save to cache in background (don't wait)
+        saveImageToCache(imageId, imageUrl, blob).catch(console.error);
+        
+        return { url: blobUrl, fromCache: false, imageId };
+    } catch (error) {
+        console.error(`Failed to load image ${imageNumber}:`, error);
+        return null;
+    }
+}
+
+// Load images in parallel batches
+async function loadImagesInParallel(startIndex, endIndex, onProgress) {
+    const promises = [];
+    const results = [];
+    
+    for (let i = startIndex; i <= endIndex; i++) {
+        const imageUrl = `${LOW_QUALITY_FOLDER}/${i}.JPG`;
+        promises.push(loadImageWithCache(i, imageUrl));
+    }
+    
+    const loadedResults = await Promise.all(promises);
+    
+    for (let i = 0; i < loadedResults.length; i++) {
+        const result = loadedResults[i];
+        if (result) {
+            results.push({
+                index: startIndex + i,
+                ...result
+            });
+        }
+        if (onProgress) onProgress(startIndex + i);
+    }
+    
+    return results;
+}
+
+// ============================================
+// DISPLAY PHOTOS WITH FAST PARALLEL LOADING
 // ============================================
 
 async function displayPhotos() {
@@ -165,27 +258,17 @@ async function displayPhotos() {
         if (progressBar) progressBar.style.width = '0%';
     }
     
-    let loadedCount = 0;
-    let cachedCount = 0;
-    let networkCount = 0;
-    
-    // Show cache info
-    const stats = await getCacheStats();
-    if (stats.total > 0) {
-        updateStatsMessage(`📦 Loading ${stats.total} cached images...`);
-    }
-    
+    // Create all cards first (skeleton)
+    const cards = [];
     for (let i = 1; i <= TOTAL_IMAGES; i++) {
         const card = document.createElement("div");
         card.classList.add("grid-card");
         card.style.animationDelay = `${(i % 20) * 0.02}s`;
         
-        const imageUrl = `${LOW_QUALITY_FOLDER}/${i}.JPG`;
-        
         card.innerHTML = `
             <div class="card-image">
                 <div class="skeleton"></div>
-                <img data-src="${imageUrl}" alt="Photo ${i}" loading="lazy">
+                <img data-src="" alt="Photo ${i}" loading="lazy">
                 <div class="card-info">
                     <span class="card-date">📅 Photo ${i}</span>
                     <span class="card-name">📷 Image ${i}</span>
@@ -199,40 +282,10 @@ async function displayPhotos() {
         `;
         
         grid.appendChild(card);
+        cards.push(card);
         images.push(`${ORIGINAL_FOLDER}/${i}.JPG`);
         
-        // Load image with cache
-        const img = card.querySelector('img');
-        const skeleton = card.querySelector('.skeleton');
-        
-        // Start loading
-        const result = await loadImageWithCache(i, imageUrl);
-        
-        if (result) {
-            img.src = result.url;
-            img.classList.add('loaded');
-            if (skeleton) skeleton.style.display = 'none';
-            
-            if (result.fromCache) {
-                cachedCount++;
-            } else {
-                networkCount++;
-            }
-        } else {
-            if (skeleton) skeleton.style.display = 'none';
-        }
-        
-        loadedCount++;
-        if (progressBar) {
-            progressBar.style.width = `${(loadedCount / TOTAL_IMAGES) * 100}%`;
-        }
-        
-        // Update stats every 10 images
-        if (loadedCount % 10 === 0 || loadedCount === TOTAL_IMAGES) {
-            updateStatsMessage(`📸 ${loadedCount}/${TOTAL_IMAGES} • 💾 ${cachedCount} cached • 🌐 ${networkCount} new`);
-        }
-        
-        // Double click to open modal
+        // Add event listeners
         card.addEventListener("dblclick", function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -240,7 +293,6 @@ async function displayPhotos() {
             openModal(images[currentImageIndex]);
         });
         
-        // Single click to select/deselect
         card.addEventListener("click", function (e) {
             if (e.target.classList.contains('download-card-btn')) return;
             clearTimeout(clickTimeout);
@@ -250,11 +302,67 @@ async function displayPhotos() {
         });
     }
     
-    updateStats();
-    
-    // Show cache summary
+    // Check cache stats first
     const cacheStats = await getCacheStats();
-    updateStatsMessage(`📸 ${TOTAL_IMAGES} images • 💾 ${cacheStats.total} cached • Click to select`);
+    if (cacheStats.total > 0) {
+        showNotification('📦 Cache Ready', `${cacheStats.total} images loaded from cache`, 'success', 2000);
+    } else {
+        showNotification('📥 First Time Loading', 'Downloading images for faster future visits...', 'info', 3000);
+    }
+    
+    // Load images in parallel batches
+    let loadedCount = 0;
+    let cachedCount = 0;
+    let networkCount = 0;
+    
+    const startTime = Date.now();
+    
+    for (let batch = 1; batch <= TOTAL_IMAGES; batch += PARALLEL_LOAD_COUNT) {
+        const end = Math.min(batch + PARALLEL_LOAD_COUNT - 1, TOTAL_IMAGES);
+        
+        const results = await loadImagesInParallel(batch, end, (index) => {
+            loadedCount++;
+            if (progressBar) {
+                progressBar.style.width = `${(loadedCount / TOTAL_IMAGES) * 100}%`;
+            }
+        });
+        
+        // Update cards with loaded images
+        for (const result of results) {
+            const card = cards[result.index - 1];
+            const img = card.querySelector('img');
+            const skeleton = card.querySelector('.skeleton');
+            
+            img.src = result.url;
+            img.classList.add('loaded');
+            if (skeleton) skeleton.style.display = 'none';
+            
+            if (result.fromCache) {
+                cachedCount++;
+            } else {
+                networkCount++;
+            }
+        }
+        
+        // Update stats
+        const statsEl = document.getElementById('stats');
+        if (statsEl && !loadingComplete) {
+            const percent = Math.round((loadedCount / TOTAL_IMAGES) * 100);
+            statsEl.textContent = `📸 Loading ${percent}% • 💾 ${cachedCount} cached • 🌐 ${networkCount} new`;
+        }
+    }
+    
+    const loadTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    
+    // Show completion notification
+    if (networkCount > 0) {
+        showNotification('✅ Gallery Ready!', `${TOTAL_IMAGES} images loaded in ${loadTime}s • ${cachedCount} from cache`, 'success', 4000);
+    } else {
+        showNotification('⚡ Fully Cached!', `All ${TOTAL_IMAGES} images loaded from cache in ${loadTime}s`, 'success', 3000);
+    }
+    
+    loadingComplete = true;
+    updateStats();
     
     // Hide loading bar
     setTimeout(() => {
@@ -264,12 +372,7 @@ async function displayPhotos() {
                 loadingBar.style.display = 'none';
             }, 500);
         }
-    }, 2000);
-}
-
-function updateStatsMessage(message) {
-    const statsEl = document.getElementById('stats');
-    if (statsEl) statsEl.textContent = message;
+    }, 1000);
 }
 
 function updateStats() {
@@ -329,7 +432,7 @@ function prevImage() {
 }
 
 // ============================================
-// DOWNLOAD FUNCTIONS
+// DOWNLOAD FUNCTIONS WITH NOTIFICATIONS
 // ============================================
 
 function downloadOriginal(imageNumber) {
@@ -339,7 +442,7 @@ function downloadOriginal(imageNumber) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showTempMessage(`⬇️ Downloading: Photo ${imageNumber}`);
+    showNotification('⬇️ Download Started', `Photo ${imageNumber} is downloading`, 'info', 1500);
 }
 
 function showTempMessage(message) {
@@ -375,9 +478,11 @@ function confirmDownload() {
     });
     
     if (selectedNumbers.length === 0) {
-        alert('Please select at least one image to download. Click on images to select them (red border appears).');
+        showNotification('⚠️ No Selection', 'Please click on images to select them first', 'warning', 2000);
         return;
     }
+    
+    showNotification('📥 Download Started', `Downloading ${selectedNumbers.length} images...`, 'info', 2000);
     
     selectedNumbers.forEach((imageNum, index) => {
         setTimeout(() => {
@@ -460,6 +565,7 @@ function startAutoPlay() {
         nextImage();
     }, 4000);
     
+    showNotification('🎬 Auto-Play Started', 'Playing slideshow with One Direction - 18', 'success', 2000);
     const statsEl = document.getElementById('stats');
     if (statsEl) statsEl.textContent = `🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18`;
 }
@@ -473,31 +579,29 @@ function stopAutoPlay() {
     stopMusic();
     closeModal();
     updateStats();
+    showNotification('⏹️ Auto-Play Stopped', 'Slideshow has been stopped', 'info', 1500);
 }
 
 // ============================================
-// HEADER IMAGE LOADING
+// HEADER IMAGE LOADING WITH NOTIFICATION
 // ============================================
 
 async function loadHeaderImage() {
     const heroImg = document.getElementById('heroImage');
     if (!heroImg) return;
     
-    // Try to load header image with cache
     const result = await loadImageWithCache('header', `${ORIGINAL_FOLDER}/${HEADER_IMAGE_BASE}.JPG`);
     
     if (result) {
         heroImg.src = result.url;
         heroImg.style.display = 'block';
     } else {
-        // Fallback to LQ folder
         const fallbackResult = await loadImageWithCache('header_fallback', `${LOW_QUALITY_FOLDER}/${HEADER_IMAGE_BASE}.JPG`);
         if (fallbackResult) {
             heroImg.src = fallbackResult.url;
             heroImg.style.display = 'block';
         } else {
             heroImg.style.display = 'none';
-            console.log('Header image not found');
         }
     }
 }
@@ -531,6 +635,22 @@ function sortImages(sortType) {
     });
     
     cards.forEach(card => grid.appendChild(card));
+    showNotification('🔄 Sorted', `Images sorted by ${sortType.replace('-', ' ')}`, 'info', 1000);
+}
+
+// ============================================
+// CLEAR CACHE FUNCTION (Optional)
+// ============================================
+
+async function clearCache() {
+    if (!db) return;
+    
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    await store.clear();
+    
+    showNotification('🗑️ Cache Cleared', 'All cached images have been cleared', 'warning', 2000);
+    setTimeout(() => location.reload(), 1000);
 }
 
 // ============================================
@@ -692,6 +812,8 @@ function bindEvents() {
 // ============================================
 
 async function init() {
+    showNotification('🚀 Starting Gallery', 'Loading KC@18 Debut Gallery...', 'info', 1500);
+    
     // Open IndexedDB first
     try {
         await openDatabase();
@@ -717,6 +839,20 @@ async function init() {
     if (floatingHelpButton) {
         makeButtonMovable(floatingHelpButton, 'isDraggingHelpButton');
         floatingHelpButton.addEventListener('click', showHelpPopup);
+    }
+    
+    // Add clear cache option to help popup (optional)
+    const helpContent = document.querySelector('#helpPopupOverlay .popup-content');
+    if (helpContent && !document.getElementById('clearCacheBtn')) {
+        const clearBtn = document.createElement('button');
+        clearBtn.id = 'clearCacheBtn';
+        clearBtn.textContent = '🗑️ Clear Cache';
+        clearBtn.style.cssText = 'background: #dc2626; color: white; margin-top: 10px;';
+        clearBtn.onclick = async () => {
+            await clearCache();
+            closeHelpPopup();
+        };
+        helpContent.appendChild(clearBtn);
     }
 }
 
