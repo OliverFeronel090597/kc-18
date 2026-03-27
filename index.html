@@ -620,12 +620,10 @@
     </style>
 </head>
 <body>
-    <!-- Loading Bar -->
     <div class="loading-bar" id="loadingBar">
         <div class="loading-progress" id="loadingProgress"></div>
     </div>
 
-    <!-- Hero Section with Text at Top -->
     <div class="hero-section">
         <img class="hero-image" id="heroImage" alt="KC@18 Debut">
         <div class="hero-overlay"></div>
@@ -636,7 +634,6 @@
         </div>
     </div>
 
-    <!-- Controls Bar -->
     <div class="controls-bar">
         <div class="logo">❤️ KC@18 GALLERY</div>
         <div class="button-group">
@@ -647,7 +644,6 @@
         <div class="stats" id="stats">Loading gallery...</div>
     </div>
 
-    <!-- Sort Bar -->
     <div class="sort-bar">
         <span class="sort-label">SORT BY:</span>
         <button class="sort-btn active" data-sort="date-oldest">📅 OLDEST FIRST</button>
@@ -656,7 +652,6 @@
         <button class="sort-btn" data-sort="name-desc">🔤 NAME Z-A</button>
     </div>
 
-    <!-- Grid Container -->
     <div class="grid-container">
         <div class="image-grid" id="imageGrid">
             <div class="loading-state">
@@ -666,7 +661,6 @@
         </div>
     </div>
 
-    <!-- Fullscreen Modal for Auto-play -->
     <div class="fullscreen-modal" id="fullscreenModal">
         <div class="fullscreen-content">
             <button class="fullscreen-close" id="fullscreenClose">✕</button>
@@ -678,17 +672,18 @@
     </div>
 
     <script>
-        // Configuration - Fix folder names to match GitHub
-        // Based on your error, the folder name in GitHub is 'KCat18_LQ' not 'KC@18_LQ'
+        // ============================================
+        // FIXED CONFIGURATION - Correct folder structure
+        // ============================================
         const LOW_QUALITY_FOLDER = 'KCat18_LQ';
         const ORIGINAL_FOLDER = 'KCat18';
         const HEADER_IMAGE_BASE = '_DSC0226';
         const MUSIC_FILE = 'music/One Direction - 18 (Lyrics) (1).mp3';
         
-        // Supported extensions (case-insensitive)
+        // Supported extensions - will try common ones in order
         const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG'];
         
-        // Base image names without extension (all your images)
+        // Complete list of image base names (without extension)
         const baseImageNames = [
             '_DSC0031', '_DSC0032', '_DSC0033', '_DSC0034', '_DSC0035',
             '_DSC0036', '_DSC0037', '_DSC0039', '_DSC0044', '_DSC0045',
@@ -734,6 +729,7 @@
             '_DSC0752'
         ];
         
+        // Global state
         let images = [];
         let currentIndex = 0;
         let autoPlayInterval = null;
@@ -742,22 +738,17 @@
         let audio = null;
         let loadedImagesCount = 0;
         
-        // Function to find the correct file extension (case-insensitive)
-        async function findImagePath(baseName, folder) {
-            for (const ext of SUPPORTED_EXTENSIONS) {
-                const url = `${folder}/${baseName}${ext}`;
-                const exists = await imageExists(url);
-                if (exists) {
-                    console.log(`Found: ${url}`);
-                    return { url, ext };
-                }
-            }
-            console.log(`Not found: ${baseName} in ${folder}`);
-            return null;
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+        function getImageNumber(filename) {
+            const match = filename.match(/_DSC(\d+)/i);
+            if (match) return parseInt(match[1]);
+            return 0;
         }
         
-        // Function to check if an image exists
-        async function imageExists(url) {
+        // Check if image exists (promise-based)
+        function imageExists(url) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => resolve(true);
@@ -766,69 +757,48 @@
             });
         }
         
-        // Get all image paths with correct extensions
+        // Find valid path for a base name in a folder
+        async function findImagePath(baseName, folder) {
+            for (const ext of SUPPORTED_EXTENSIONS) {
+                const url = `${folder}/${baseName}${ext}`;
+                const exists = await imageExists(url);
+                if (exists) {
+                    return { url, ext };
+                }
+            }
+            return null;
+        }
+        
+        // Get all valid image paths from the list
         async function getAllImagePaths() {
             const imagePaths = [];
-            let foundCount = 0;
+            const statsEl = document.getElementById('stats');
             
-            for (const baseName of baseImageNames) {
+            for (let i = 0; i < baseImageNames.length; i++) {
+                const baseName = baseImageNames[i];
                 const result = await findImagePath(baseName, LOW_QUALITY_FOLDER);
+                
                 if (result) {
                     const fileName = `${baseName}${result.ext}`;
                     const imageNum = getImageNumber(fileName);
                     imagePaths.push({
                         name: fileName,
                         timestamp: imageNum,
-                        displayDate: `DSC-${String(imageNum).padStart(4, '0')}`
+                        displayDate: `IMG-${String(imageNum).slice(-4)}`
                     });
-                    foundCount++;
                 }
                 
-                // Update status every 10 images
-                if (baseImageNames.indexOf(baseName) % 10 === 0) {
-                    document.getElementById('stats').textContent = `Scanning: ${foundCount}/${baseImageNames.length} images found...`;
+                // Update scanning progress every 10 images
+                if (i % 10 === 0 || i === baseImageNames.length - 1) {
+                    if (statsEl) statsEl.textContent = `Scanning: ${imagePaths.length}/${baseImageNames.length} images found...`;
                 }
             }
             
-            console.log(`Total images found: ${foundCount}`);
+            console.log(`✅ Total valid images found: ${imagePaths.length}`);
             return imagePaths;
         }
         
-        // Initialize audio
-        function initAudio() {
-            try {
-                audio = new Audio(MUSIC_FILE);
-                audio.loop = true;
-                audio.volume = 0.5;
-            } catch(e) {
-                console.log('Audio initialization failed:', e);
-            }
-        }
-        
-        function startMusic() {
-            if (!audio) {
-                initAudio();
-            }
-            if (audio) {
-                audio.play().catch(e => console.log('Audio play failed:', e));
-            }
-        }
-        
-        function stopMusic() {
-            if (audio) {
-                audio.pause();
-                audio.currentTime = 0;
-            }
-        }
-        
-        // Get image number for sorting
-        function getImageNumber(filename) {
-            const match = filename.match(/_DSC(\d+)/i);
-            if (match) return parseInt(match[1]);
-            return 0;
-        }
-        
-        // Sort images
+        // Sort images based on current sort mode
         function sortImages(imagesArray) {
             const sorted = [...imagesArray];
             switch(currentSort) {
@@ -848,7 +818,31 @@
             return sorted;
         }
         
-        // Lazy load images one by one
+        function getSortLabel() {
+            const labels = {
+                'date-oldest': 'Oldest First',
+                'date-newest': 'Newest First',
+                'name-asc': 'A-Z',
+                'name-desc': 'Z-A'
+            };
+            return labels[currentSort] || 'Oldest First';
+        }
+        
+        // Show temporary status message
+        function showTempMessage(message, duration = 2000) {
+            const statsEl = document.getElementById('stats');
+            const original = statsEl.textContent;
+            statsEl.textContent = message;
+            setTimeout(() => {
+                if (statsEl.textContent === message) {
+                    statsEl.textContent = original;
+                }
+            }, duration);
+        }
+        
+        // ============================================
+        // IMAGE GALLERY RENDERING
+        // ============================================
         function lazyLoadImage(imgElement, src, card) {
             const skeleton = card.querySelector('.skeleton');
             const image = new Image();
@@ -860,20 +854,19 @@
                 
                 loadedImagesCount++;
                 const progress = (loadedImagesCount / images.length) * 100;
-                document.getElementById('loadingProgress').style.width = `${progress}%`;
+                const progressBar = document.getElementById('loadingProgress');
+                if (progressBar) progressBar.style.width = `${progress}%`;
                 
                 if (loadedImagesCount === images.length) {
+                    const loadingBar = document.getElementById('loadingBar');
+                    loadingBar.style.opacity = '0';
                     setTimeout(() => {
-                        document.getElementById('loadingBar').style.opacity = '0';
-                        setTimeout(() => {
-                            document.getElementById('loadingBar').style.display = 'none';
-                        }, 500);
+                        loadingBar.style.display = 'none';
                     }, 500);
                 }
             };
             
             image.onerror = () => {
-                console.log('Failed to load:', src);
                 if (skeleton) skeleton.style.display = 'none';
                 imgElement.classList.add('loaded');
                 loadedImagesCount++;
@@ -882,21 +875,23 @@
             image.src = src;
         }
         
-        // Display images in grid with lazy loading
         function displayImages(imagesArray) {
             const grid = document.getElementById('imageGrid');
+            if (!grid) return;
+            
             grid.innerHTML = '';
             loadedImagesCount = 0;
             
-            // Reset loading bar
             const loadingBar = document.getElementById('loadingBar');
             loadingBar.style.display = 'block';
             loadingBar.style.opacity = '1';
-            document.getElementById('loadingProgress').style.width = '0%';
+            const progressBar = document.getElementById('loadingProgress');
+            if (progressBar) progressBar.style.width = '0%';
             
             if (imagesArray.length === 0) {
-                grid.innerHTML = '<div class="loading-state"><p>⚠️ No images found. Please check folder structure.</p><p style="font-size: 0.8rem; margin-top: 1rem;">Expected folders: KCat18_LQ/ and KCat18/ with JPG images</p></div>';
-                document.getElementById('stats').textContent = 'No images found';
+                grid.innerHTML = '<div class="loading-state"><p>⚠️ No images found. Please check folder structure.</p><p style="font-size: 0.8rem; margin-top: 1rem;">Expected folders: KCat18_LQ/ and KCat18/ with JPG/PNG images</p></div>';
+                const statsEl = document.getElementById('stats');
+                if (statsEl) statsEl.textContent = 'No images found';
                 return;
             }
             
@@ -917,7 +912,7 @@
                             <span class="card-name">📷 ${image.name}</span>
                         </div>
                         <div class="card-overlay">
-                            <button class="download-card-btn" onclick="event.stopPropagation(); downloadOriginal('${image.name}')">
+                            <button class="download-card-btn" onclick="event.stopPropagation(); window.downloadOriginal('${image.name}')">
                                 📥 Download Original
                             </button>
                         </div>
@@ -926,7 +921,6 @@
                 
                 grid.appendChild(card);
                 
-                // Lazy load image
                 const img = card.querySelector('img');
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
@@ -935,44 +929,44 @@
                             observer.disconnect();
                         }
                     });
-                }, { rootMargin: '50px' });
+                }, { rootMargin: '100px' });
                 
                 observer.observe(img);
             });
             
-            document.getElementById('stats').textContent = `📸 ${imagesArray.length} images • ${getSortLabel()}`;
-            document.getElementById('imageCount').textContent = `${imagesArray.length} Moments Captured`;
+            const statsEl = document.getElementById('stats');
+            if (statsEl) statsEl.textContent = `📸 ${imagesArray.length} images • ${getSortLabel()}`;
+            const imageCountEl = document.getElementById('imageCount');
+            if (imageCountEl) imageCountEl.textContent = `${imagesArray.length} Moments Captured`;
         }
         
-        // Load header image with case-insensitive extension detection
+        // ============================================
+        // HEADER IMAGE LOADING (FIXED)
+        // ============================================
         async function loadHeaderImage() {
             const heroImg = document.getElementById('heroImage');
-            const result = await findImagePath(HEADER_IMAGE_BASE, LOW_QUALITY_FOLDER);
+            if (!heroImg) return;
             
-            if (result) {
+            // Try to find header image in LQ folder first, then original
+            let result = await findImagePath(HEADER_IMAGE_BASE, LOW_QUALITY_FOLDER);
+            if (!result) {
+                result = await findImagePath(HEADER_IMAGE_BASE, ORIGINAL_FOLDER);
+            }
+            
+            if (result && result.url) {
                 heroImg.src = result.url;
+                heroImg.style.display = 'block';
             } else {
-                const originalResult = await findImagePath(HEADER_IMAGE_BASE, ORIGINAL_FOLDER);
-                if (originalResult) {
-                    heroImg.src = originalResult.url;
-                } else {
-                    console.log('Header image not found');
-                    heroImg.style.display = 'none';
-                }
+                console.warn('Header image not found, using fallback');
+                heroImg.style.display = 'none';
+                // Optional: set a fallback gradient or color
             }
         }
         
-        function getSortLabel() {
-            switch(currentSort) {
-                case 'date-oldest': return 'Oldest First';
-                case 'date-newest': return 'Newest First';
-                case 'name-asc': return 'A-Z';
-                case 'name-desc': return 'Z-A';
-                default: return 'Oldest First';
-            }
-        }
-        
-        function downloadOriginal(imageName) {
+        // ============================================
+        // DOWNLOAD FUNCTIONS
+        // ============================================
+        window.downloadOriginal = function(imageName) {
             const link = document.createElement('a');
             link.href = `${ORIGINAL_FOLDER}/${imageName}`;
             link.download = `KC18_${imageName}`;
@@ -980,69 +974,102 @@
             link.click();
             document.body.removeChild(link);
             showTempMessage(`⬇️ Downloading: ${imageName}`);
-        }
+        };
         
         function downloadAllOriginals() {
             if (images.length === 0) return;
             let downloaded = 0;
             images.forEach((image, index) => {
                 setTimeout(() => {
-                    downloadOriginal(image.name);
+                    const link = document.createElement('a');
+                    link.href = `${ORIGINAL_FOLDER}/${image.name}`;
+                    link.download = `KC18_${image.name}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                     downloaded++;
-                    document.getElementById('stats').textContent = `Downloading: ${downloaded}/${images.length}`;
+                    const statsEl = document.getElementById('stats');
+                    if (statsEl) statsEl.textContent = `Downloading: ${downloaded}/${images.length}`;
                     if (downloaded === images.length) {
                         setTimeout(() => {
-                            document.getElementById('stats').textContent = `✅ Downloaded all ${images.length} originals`;
+                            if (statsEl) statsEl.textContent = `✅ Downloaded all ${images.length} originals`;
                             setTimeout(() => {
-                                document.getElementById('stats').textContent = `📸 ${images.length} images • ${getSortLabel()}`;
+                                if (statsEl) statsEl.textContent = `📸 ${images.length} images • ${getSortLabel()}`;
                             }, 2000);
                         }, 500);
                     }
-                }, index * 300);
+                }, index * 250);
             });
         }
         
-        function showTempMessage(message) {
-            const original = document.getElementById('stats').textContent;
-            document.getElementById('stats').textContent = message;
-            setTimeout(() => {
-                document.getElementById('stats').textContent = original;
-            }, 1500);
-        }
-        
-        // Fullscreen functions
+        // ============================================
+        // FULLSCREEN & AUTO-PLAY
+        // ============================================
         function openFullscreen(index) {
+            if (!images.length) return;
             currentIndex = index;
             const modal = document.getElementById('fullscreenModal');
             const img = document.getElementById('fullscreenImage');
             const info = document.getElementById('fullscreenInfo');
-            
-            img.src = `${LOW_QUALITY_FOLDER}/${images[currentIndex].name}`;
-            info.textContent = `${images[currentIndex].name} | ${images[currentIndex].displayDate}`;
-            modal.classList.add('active');
+            if (img && info) {
+                img.src = `${LOW_QUALITY_FOLDER}/${images[currentIndex].name}`;
+                info.textContent = `${images[currentIndex].name} | ${images[currentIndex].displayDate}`;
+            }
+            if (modal) modal.classList.add('active');
         }
         
         function closeFullscreen() {
-            document.getElementById('fullscreenModal').classList.remove('active');
+            const modal = document.getElementById('fullscreenModal');
+            if (modal) modal.classList.remove('active');
         }
         
         function nextFullscreen() {
+            if (!images.length) return;
             currentIndex = (currentIndex + 1) % images.length;
             const img = document.getElementById('fullscreenImage');
             const info = document.getElementById('fullscreenInfo');
-            img.src = `${LOW_QUALITY_FOLDER}/${images[currentIndex].name}`;
-            info.textContent = `${images[currentIndex].name} | ${images[currentIndex].displayDate}`;
+            if (img && info) {
+                img.src = `${LOW_QUALITY_FOLDER}/${images[currentIndex].name}`;
+                info.textContent = `${images[currentIndex].name} | ${images[currentIndex].displayDate}`;
+            }
         }
         
         function prevFullscreen() {
+            if (!images.length) return;
             currentIndex = (currentIndex - 1 + images.length) % images.length;
             const img = document.getElementById('fullscreenImage');
             const info = document.getElementById('fullscreenInfo');
-            img.src = `${LOW_QUALITY_FOLDER}/${images[currentIndex].name}`;
-            info.textContent = `${images[currentIndex].name} | ${images[currentIndex].displayDate}`;
+            if (img && info) {
+                img.src = `${LOW_QUALITY_FOLDER}/${images[currentIndex].name}`;
+                info.textContent = `${images[currentIndex].name} | ${images[currentIndex].displayDate}`;
+            }
         }
         
-        // Auto-play - shows fullscreen, cycles through images, plays music
+        // Audio functions
+        function initAudio() {
+            try {
+                audio = new Audio(MUSIC_FILE);
+                audio.loop = true;
+                audio.volume = 0.5;
+            } catch(e) {
+                console.log('Audio init failed:', e);
+            }
+        }
+        
+        function startMusic() {
+            if (!audio) initAudio();
+            if (audio) {
+                audio.play().catch(e => console.log('Audio play blocked:', e));
+            }
+        }
+        
+        function stopMusic() {
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        }
+        
         function startAutoPlay() {
             if (autoPlayInterval) clearInterval(autoPlayInterval);
             if (images.length === 0) return;
@@ -1054,7 +1081,8 @@
                 nextFullscreen();
             }, 4000);
             
-            document.getElementById('stats').textContent = `🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18 • Press ✕ to stop`;
+            const statsEl = document.getElementById('stats');
+            if (statsEl) statsEl.textContent = `🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18 • Press ✕ to stop`;
         }
         
         function stopAutoPlay() {
@@ -1065,65 +1093,90 @@
             isAutoPlaying = false;
             stopMusic();
             closeFullscreen();
-            document.getElementById('stats').textContent = `📸 ${images.length} images • ${getSortLabel()}`;
+            const statsEl = document.getElementById('stats');
+            if (statsEl && images.length) statsEl.textContent = `📸 ${images.length} images • ${getSortLabel()}`;
         }
         
+        // ============================================
+        // REFRESH GALLERY (MAIN LOADER)
+        // ============================================
         async function refreshGallery() {
-            document.getElementById('imageGrid').innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Scanning for images in KCat18_LQ/ folder...</p></div>';
+            const grid = document.getElementById('imageGrid');
+            if (grid) {
+                grid.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Scanning for images in KCat18_LQ/ folder...</p></div>';
+            }
             const imageObjects = await getAllImagePaths();
             const sorted = sortImages(imageObjects);
             images = sorted;
             displayImages(images);
         }
         
-        // Event Listeners
-        document.getElementById('autoPlayBtn').addEventListener('click', startAutoPlay);
-        document.getElementById('downloadAllBtn').addEventListener('click', downloadAllOriginals);
-        document.getElementById('refreshBtn').addEventListener('click', refreshGallery);
-        document.getElementById('fullscreenClose').addEventListener('click', stopAutoPlay);
-        document.getElementById('fullscreenPrev').addEventListener('click', () => {
-            prevFullscreen();
-            if (autoPlayInterval) {
-                clearInterval(autoPlayInterval);
-                autoPlayInterval = setInterval(() => nextFullscreen(), 4000);
-            }
-        });
-        document.getElementById('fullscreenNext').addEventListener('click', () => {
-            nextFullscreen();
-            if (autoPlayInterval) {
-                clearInterval(autoPlayInterval);
-                autoPlayInterval = setInterval(() => nextFullscreen(), 4000);
-            }
-        });
-        
-        document.querySelectorAll('.sort-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const sortType = btn.dataset.sort;
-                currentSort = sortType;
-                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                if (images.length > 0) {
-                    const sorted = sortImages(images);
-                    images = sorted;
-                    displayImages(images);
-                    if (isAutoPlaying) stopAutoPlay();
+        // ============================================
+        // EVENT LISTENERS & INITIALIZATION
+        // ============================================
+        function bindEvents() {
+            const autoPlayBtn = document.getElementById('autoPlayBtn');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const fullscreenClose = document.getElementById('fullscreenClose');
+            const fullscreenPrev = document.getElementById('fullscreenPrev');
+            const fullscreenNext = document.getElementById('fullscreenNext');
+            
+            if (autoPlayBtn) autoPlayBtn.addEventListener('click', startAutoPlay);
+            if (downloadAllBtn) downloadAllBtn.addEventListener('click', downloadAllOriginals);
+            if (refreshBtn) refreshBtn.addEventListener('click', refreshGallery);
+            if (fullscreenClose) fullscreenClose.addEventListener('click', stopAutoPlay);
+            if (fullscreenPrev) fullscreenPrev.addEventListener('click', () => {
+                prevFullscreen();
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = setInterval(() => nextFullscreen(), 4000);
                 }
             });
-        });
+            if (fullscreenNext) fullscreenNext.addEventListener('click', () => {
+                nextFullscreen();
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = setInterval(() => nextFullscreen(), 4000);
+                }
+            });
+            
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const sortType = btn.dataset.sort;
+                    if (sortType) {
+                        currentSort = sortType;
+                        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        if (images.length > 0) {
+                            const sorted = sortImages(images);
+                            images = sorted;
+                            displayImages(images);
+                            if (isAutoPlaying) stopAutoPlay();
+                        }
+                    }
+                });
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                const modal = document.getElementById('fullscreenModal');
+                if (modal && modal.classList.contains('active')) {
+                    if (e.key === 'ArrowLeft') prevFullscreen();
+                    if (e.key === 'ArrowRight') nextFullscreen();
+                    if (e.key === 'Escape') stopAutoPlay();
+                }
+            });
+        }
         
-        document.addEventListener('keydown', (e) => {
-            const modal = document.getElementById('fullscreenModal');
-            if (modal.classList.contains('active')) {
-                if (e.key === 'ArrowLeft') prevFullscreen();
-                if (e.key === 'ArrowRight') nextFullscreen();
-                if (e.key === 'Escape') stopAutoPlay();
-            }
-        });
+        // Start everything
+        async function init() {
+            bindEvents();
+            await loadHeaderImage();
+            await refreshGallery();
+            initAudio();
+        }
         
-        // Initialize
-        loadHeaderImage();
-        refreshGallery();
-        initAudio();
+        init();
     </script>
 </body>
 </html>
