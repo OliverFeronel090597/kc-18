@@ -3,6 +3,7 @@
 // Features: Fast loading, notifications, cache, draggable buttons, 
 // Auto-play with pause, spacebar pause, long-press for mobile, swipe navigation, mobile play/pause
 // Navigation buttons ONLY show when NOT auto-playing
+// FIXED: Home page scrolling now works properly
 // ============================================
 
 // Configuration
@@ -91,98 +92,6 @@ function showNotification(title, message, type = 'info', duration = 3000) {
     }, duration);
 }
 
-// Add animation styles
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateX(100%); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes slideOut {
-        from { opacity: 1; transform: translateX(0); }
-        to { opacity: 0; transform: translateX(100%); }
-    }
-    .grid-card.selected {
-        border: 2px solid #dc2626 !important;
-        box-shadow: 0 0 20px rgba(220, 38, 38, 0.5) !important;
-    }
-    .download-card-btn {
-        background: linear-gradient(135deg, #dc2626, #991b1b);
-        transition: all 0.3s ease;
-    }
-    .download-card-btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 2px 10px rgba(220, 38, 38, 0.5);
-    }
-    .floating-button {
-        z-index: 10000;
-        position: fixed;
-        cursor: grab;
-        user-select: none;
-        pointer-events: auto;
-        background: linear-gradient(135deg, #dc2626, #991b1b);
-        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-        transition: all 0.3s ease;
-    }
-    .floating-button:active {
-        cursor: grabbing;
-    }
-    .floating-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
-    }
-    .floating-button.hidden {
-        display: none !important;
-    }
-    .fullscreen-modal.active {
-        display: flex;
-        animation: fadeIn 0.3s ease;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    .grid-card.long-press {
-        transform: scale(0.98);
-        transition: transform 0.1s ease;
-    }
-    /* Mobile play/pause button */
-    .mobile-play-pause {
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #dc2626, #991b1b);
-        color: white;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-        z-index: 10000;
-        font-size: 1.2rem;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-    .mobile-play-pause.visible {
-        display: flex;
-    }
-    .mobile-play-pause:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
-    }
-    @media (max-width: 768px) {
-        .mobile-play-pause {
-            display: none;
-        }
-        .mobile-play-pause.visible {
-            display: flex;
-        }
-    }
-`;
-document.head.appendChild(style);
 
 // ============================================
 // MOBILE PLAY/PAUSE BUTTON
@@ -389,7 +298,7 @@ async function displayPhotos() {
 
         // Long press for mobile (hold to maximize)
         card.addEventListener('touchstart', (e) => {
-            e.preventDefault();
+            // Don't prevent default on touchstart to allow scrolling
             longPressTimer = setTimeout(() => {
                 isLongPressing = true;
                 card.classList.add('long-press');
@@ -485,6 +394,8 @@ async function displayPhotos() {
             loadingBar.style.opacity = '0';
             setTimeout(() => loadingBar.style.display = 'none', 500);
         }
+        // Fix scrolling after images are loaded
+        fixScrollBehavior();
     }, 1000);
 }
 
@@ -507,6 +418,40 @@ function updateStats() {
 }
 
 // ============================================
+// FIX SCROLLING ON HOME PAGE IMAGE GRID
+// ============================================
+
+function fixScrollBehavior() {
+    const gridContainer = document.querySelector('.grid-container');
+    const imageGrid = document.getElementById('imageGrid');
+    
+    if (!gridContainer) return;
+    
+    // Ensure the container is scrollable
+    gridContainer.style.overflowY = 'auto';
+    gridContainer.style.overflowX = 'hidden';
+    gridContainer.style.maxHeight = 'calc(100vh - 180px)';
+    
+    // For mobile devices
+    if ('ontouchstart' in window) {
+        gridContainer.style.webkitOverflowScrolling = 'touch';
+    }
+    
+    // Add scroll indicator if content is scrollable
+    if (gridContainer.scrollHeight > gridContainer.clientHeight) {
+        gridContainer.classList.add('scrollable');
+    } else {
+        gridContainer.classList.remove('scrollable');
+    }
+    
+    // Make sure cards don't block scroll
+    const cards = document.querySelectorAll('.grid-card');
+    cards.forEach(card => {
+        card.style.touchAction = 'pan-y pinch-zoom';
+    });
+}
+
+// ============================================
 // MODAL FUNCTIONS WITH BUTTON HIDE/SHOW
 // ============================================
 
@@ -520,9 +465,17 @@ function openModal(imageSrc, fromAutoPlay = false) {
 
     if (!modal || !modalImg) return;
 
+    // Store current scroll position
+    const scrollY = window.scrollY;
+    
     modal.classList.add('active');
     modalImg.src = imageSrc;
     if (info) info.textContent = `Photo ${currentImageIndex + 1} of ${TOTAL_IMAGES}`;
+
+    // Prevent body scroll when modal is open
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
 
     // Hide floating buttons when modal is open
     hideFloatingButtons();
@@ -556,7 +509,16 @@ function closeModal(fromAutoPlay = false) {
     const nextBtn = document.getElementById('fullscreenNext');
     const mobileBtn = document.getElementById('mobile-play-pause');
 
+    // Get scroll position before restoring
+    const scrollY = parseInt(document.body.style.top || '0') * -1;
+    
     if (modal) modal.classList.remove('active');
+
+    // Restore body scroll
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, scrollY);
 
     // Hide mobile play/pause button when modal closes
     if (mobileBtn) mobileBtn.classList.remove('visible');
@@ -1049,6 +1011,50 @@ function initFloatingButtons() {
 }
 
 // ============================================
+// SWIPE NAVIGATION FOR MODAL
+// ============================================
+
+function initSwipeNavigation() {
+    const modal = document.getElementById('fullscreenModal');
+    if (!modal) return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    modal.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    });
+    
+    modal.addEventListener('touchend', (e) => {
+        const diffX = e.changedTouches[0].screenX - touchStartX;
+        const diffY = e.changedTouches[0].screenY - touchStartY;
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+            if (diffX > 0) {
+                if (!isAutoPlaying) {
+                    prevImage();
+                } else if (isAutoPlaying && !isPaused) {
+                    pauseAutoPlay();
+                    prevImage();
+                } else {
+                    prevImage();
+                }
+            } else {
+                if (!isAutoPlaying) {
+                    nextImage();
+                } else if (isAutoPlaying && !isPaused) {
+                    pauseAutoPlay();
+                    nextImage();
+                } else {
+                    nextImage();
+                }
+            }
+            if (navigator.vibrate) navigator.vibrate(30);
+        }
+    });
+}
+
+// ============================================
 // EVENT LISTENERS
 // ============================================
 
@@ -1098,7 +1104,7 @@ function bindEvents() {
         }
     });
 
-    // Keyboard navigation with SPACE for pause/resume
+    // Keyboard navigation
     window.addEventListener('keydown', (e) => {
         const modalEl = document.getElementById('fullscreenModal');
         if (modalEl?.classList.contains('active')) {
@@ -1139,41 +1145,6 @@ function bindEvents() {
         }
     });
 
-    // Mobile swipe gestures with improved detection
-    let touchstartX = 0, touchstartY = 0;
-    if (modal) {
-        modal.addEventListener('touchstart', (e) => {
-            touchstartX = e.changedTouches[0].screenX;
-            touchstartY = e.changedTouches[0].screenY;
-        });
-        modal.addEventListener('touchend', (e) => {
-            const diffX = e.changedTouches[0].screenX - touchstartX;
-            const diffY = e.changedTouches[0].screenY - touchstartY;
-            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-                if (diffX > 0) {
-                    if (!isAutoPlaying) {
-                        prevImage();
-                    } else if (isAutoPlaying && !isPaused) {
-                        pauseAutoPlay();
-                        prevImage();
-                    } else {
-                        prevImage();
-                    }
-                } else {
-                    if (!isAutoPlaying) {
-                        nextImage();
-                    } else if (isAutoPlaying && !isPaused) {
-                        pauseAutoPlay();
-                        nextImage();
-                    } else {
-                        nextImage();
-                    }
-                }
-                if (navigator.vibrate) navigator.vibrate(30);
-            }
-        });
-    }
-
     // Sort buttons
     document.querySelectorAll('.sort-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1191,6 +1162,9 @@ function bindEvents() {
     document.getElementById('autoPlayBtn')?.addEventListener('click', startAutoPlay);
     document.getElementById('downloadAllBtn')?.addEventListener('click', downloadAllOriginals);
     document.getElementById('refreshBtn')?.addEventListener('click', () => location.reload());
+    
+    // Initialize swipe navigation
+    initSwipeNavigation();
 }
 
 // ============================================
