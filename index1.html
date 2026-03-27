@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KC-18 Gallery</title>
+
+<style>
+    body {
+        background: #111;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    #status {
+        text-align: center;
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+    .hidden {
+        display: none;
+    }
+    #gallery {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+    #gallery img {
+        width: 300px;
+        height: auto;
+        border-radius: 6px;
+        object-fit: cover;
+        transition: transform .2s;
+    }
+    #gallery img:hover {
+        transform: scale(1.05);
+    }
+</style>
+</head>
+
+<body>
+
+<h1>KC-18 Gallery</h1>
+
+<div id="status">Checking images…</div>
+<div id="gallery" class="hidden"></div>
+
+<audio id="bg-music" loop autoplay>
+    <source src="music/One Direction - 18 (Lyrics) (1).mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const LOW_QUALITY_FOLDER = "KCat18_LQ";
+const TOTAL_IMAGES = 203;
+const gallery = document.getElementById("gallery");
+const statusBox = document.getElementById("status");
+
+async function fileExists(url) {
+    try {
+        const res = await fetch(url, { method: "HEAD" });
+        return res.status === 200;
+    } catch {
+        return false;
+    }
+}
+
+async function validateAndLoad() {
+    statusBox.textContent = "Checking folder…";
+
+    // test first file to verify folder exists
+    const first = `${LOW_QUALITY_FOLDER}/1.jpg`;
+    const ok = await fileExists(first);
+
+    if (!ok) {
+        statusBox.textContent =
+            `❌ Missing folder "${LOW_QUALITY_FOLDER}/" or image "1.jpg"`;
+        statusBox.style.color = "red";
+        return;
+    }
+
+    statusBox.textContent = "Folder OK ✓ Checking full list…";
+
+    let missing = [];
+    for (let i = 1; i <= TOTAL_IMAGES; i++) {
+        const img = `${LOW_QUALITY_FOLDER}/${i}.jpg`;
+        const exists = await fileExists(img);
+        if (!exists) missing.push(i);
+    }
+
+    if (missing.length > 0) {
+        statusBox.innerHTML =
+            `❌ Missing ${missing.length} images:<br>${missing.join(", ")}`;
+        statusBox.style.color = "red";
+        return;
+    }
+
+    // Load gallery
+    statusBox.classList.add("hidden");
+    gallery.classList.remove("hidden");
+
+    for (let i = 1; i <= TOTAL_IMAGES; i++) {
+        const el = document.createElement("img");
+        el.src = `${LOW_QUALITY_FOLDER}/${i}.jpg`;
+        el.loading = "lazy";
+        gallery.appendChild(el);
+    }
+}
+
+validateAndLoad();
+</script>
+
+</body>
+</html>
