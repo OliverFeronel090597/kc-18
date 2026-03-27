@@ -1,7 +1,7 @@
 // ============================================
 // KC@18 GALLERY - Complete Optimized Version
 // Features: Fast loading, notifications, cache, draggable buttons, 
-// Auto-play with pause, spacebar pause, long-press for mobile, swipe navigation
+// Auto-play with pause, spacebar pause, long-press for mobile, swipe navigation, mobile play/pause
 // ============================================
 
 // Configuration
@@ -141,13 +141,94 @@ style.textContent = `
         from { opacity: 0; }
         to { opacity: 1; }
     }
-    /* Long press indicator */
     .grid-card.long-press {
         transform: scale(0.98);
         transition: transform 0.1s ease;
     }
+    /* Mobile play/pause button */
+    .mobile-play-pause {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dc2626, #991b1b);
+        color: white;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+        z-index: 10000;
+        font-size: 1.2rem;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    .mobile-play-pause.visible {
+        display: flex;
+    }
+    .mobile-play-pause:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+    }
+    @media (max-width: 768px) {
+        .mobile-play-pause {
+            display: none;
+        }
+        .mobile-play-pause.visible {
+            display: flex;
+        }
+    }
 `;
 document.head.appendChild(style);
+
+// ============================================
+// MOBILE PLAY/PAUSE BUTTON
+// ============================================
+
+function createMobilePlayPauseButton() {
+    let btn = document.getElementById('mobile-play-pause');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'mobile-play-pause';
+        btn.className = 'mobile-play-pause';
+        btn.innerHTML = '⏸️';
+        document.body.appendChild(btn);
+        
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isAutoPlaying && !isPaused) {
+                pauseAutoPlay();
+                btn.innerHTML = '▶️';
+            } else if (isAutoPlaying && isPaused) {
+                resumeAutoPlay();
+                btn.innerHTML = '⏸️';
+            } else if (!isAutoPlaying && modal?.classList.contains('active')) {
+                // If modal is open but not auto-playing, start auto-play
+                startAutoPlay();
+                btn.innerHTML = '⏸️';
+            }
+        });
+    }
+    return btn;
+}
+
+function updateMobilePlayPauseButton() {
+    const btn = document.getElementById('mobile-play-pause');
+    if (!btn) return;
+    
+    if (isAutoPlaying && !isPaused) {
+        btn.innerHTML = '⏸️';
+        btn.title = 'Pause Auto-Play';
+    } else if (isAutoPlaying && isPaused) {
+        btn.innerHTML = '▶️';
+        btn.title = 'Resume Auto-Play';
+    } else {
+        btn.innerHTML = '▶️';
+        btn.title = 'Start Auto-Play';
+    }
+}
 
 // ============================================
 // FLOATING BUTTONS VISIBILITY CONTROL
@@ -313,7 +394,6 @@ async function displayPhotos() {
             longPressTimer = setTimeout(() => {
                 isLongPressing = true;
                 card.classList.add('long-press');
-                // Vibrate if supported
                 if (navigator.vibrate) navigator.vibrate(50);
                 currentImageIndex = i - 1;
                 openModal(images[currentImageIndex], false);
@@ -437,6 +517,7 @@ function openModal(imageSrc, fromAutoPlay = false) {
     const info = document.getElementById('fullscreenInfo');
     const prevBtn = document.getElementById('fullscreenPrev');
     const nextBtn = document.getElementById('fullscreenNext');
+    const mobileBtn = document.getElementById('mobile-play-pause');
     
     if (!modal || !modalImg) return;
 
@@ -446,6 +527,12 @@ function openModal(imageSrc, fromAutoPlay = false) {
     
     // Hide floating buttons when modal is open
     hideFloatingButtons();
+    
+    // Show mobile play/pause button when modal is open
+    if (mobileBtn) {
+        mobileBtn.classList.add('visible');
+        updateMobilePlayPauseButton();
+    }
     
     // Hide navigation buttons during auto-play
     if (fromAutoPlay || isAutoPlaying) {
@@ -466,8 +553,12 @@ function closeModal(fromAutoPlay = false) {
     const modal = document.getElementById('fullscreenModal');
     const prevBtn = document.getElementById('fullscreenPrev');
     const nextBtn = document.getElementById('fullscreenNext');
+    const mobileBtn = document.getElementById('mobile-play-pause');
     
     if (modal) modal.classList.remove('active');
+    
+    // Hide mobile play/pause button when modal closes
+    if (mobileBtn) mobileBtn.classList.remove('visible');
     
     // Restore floating buttons when modal closes
     showFloatingButtons();
@@ -537,14 +628,17 @@ function pauseAutoPlay() {
             autoPlayInterval = null;
         }
         if (audio) audio.pause();
-        showNotification('⏸️ Auto-Play Paused', 'Click play to resume slideshow • Press SPACE to resume', 'info', 2000);
-        document.getElementById('stats').textContent = '⏸️ AUTO-PLAY PAUSED • Press ▶ or SPACE to resume';
+        showNotification('⏸️ Auto-Play Paused', 'Tap play to resume slideshow', 'info', 2000);
+        document.getElementById('stats').textContent = '⏸️ AUTO-PLAY PAUSED • Tap ▶ to resume';
         
         // Show navigation buttons when paused
         const prevBtn = document.getElementById('fullscreenPrev');
         const nextBtn = document.getElementById('fullscreenNext');
         if (prevBtn) prevBtn.style.display = 'flex';
         if (nextBtn) nextBtn.style.display = 'flex';
+        
+        // Update mobile button
+        updateMobilePlayPauseButton();
     }
 }
 
@@ -553,7 +647,7 @@ function resumeAutoPlay() {
         isPaused = false;
         autoPlayInterval = setInterval(nextImage, 4000);
         if (audio) audio.play().catch(() => {});
-        showNotification('▶️ Auto-Play Resumed', 'Slideshow continues • Press SPACE to pause', 'success', 2000);
+        showNotification('▶️ Auto-Play Resumed', 'Slideshow continues', 'success', 2000);
         document.getElementById('stats').textContent = '🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18';
         
         // Hide navigation buttons when resumed
@@ -561,6 +655,9 @@ function resumeAutoPlay() {
         const nextBtn = document.getElementById('fullscreenNext');
         if (prevBtn) prevBtn.style.display = 'none';
         if (nextBtn) nextBtn.style.display = 'none';
+        
+        // Update mobile button
+        updateMobilePlayPauseButton();
     }
 }
 
@@ -575,8 +672,11 @@ function startAutoPlay() {
     currentImageIndex = 0;
 
     autoPlayInterval = setInterval(nextImage, 4000);
-    showNotification('🎬 Auto-Play Started', 'Slideshow active • Press SPACE to pause', 'success', 2000);
-    document.getElementById('stats').textContent = '🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18 • Press SPACE to pause';
+    showNotification('🎬 Auto-Play Started', 'Tap pause button to pause', 'success', 2000);
+    document.getElementById('stats').textContent = '🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18';
+    
+    // Update mobile button
+    updateMobilePlayPauseButton();
 }
 
 function stopAutoPlay(showNotif = true) {
@@ -598,6 +698,9 @@ function stopAutoPlay(showNotif = true) {
     // Restore navigation buttons when auto-play stops
     if (prevBtn) prevBtn.style.display = 'flex';
     if (nextBtn) nextBtn.style.display = 'flex';
+    
+    // Update mobile button
+    updateMobilePlayPauseButton();
     
     if (wasAutoPlaying && showNotif) {
         showNotification('⏹️ Auto-Play Stopped', 'Slideshow has been stopped', 'info', 1500);
@@ -1039,10 +1142,8 @@ function bindEvents() {
         modal.addEventListener('touchend', (e) => {
             const diffX = e.changedTouches[0].screenX - touchstartX;
             const diffY = e.changedTouches[0].screenY - touchstartY;
-            // Only trigger if horizontal swipe is dominant
             if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
                 if (diffX > 0) {
-                    // Swipe right -> previous
                     if (!isAutoPlaying) {
                         prevImage();
                     } else if (isAutoPlaying && !isPaused) {
@@ -1052,7 +1153,6 @@ function bindEvents() {
                         prevImage();
                     }
                 } else {
-                    // Swipe left -> next
                     if (!isAutoPlaying) {
                         nextImage();
                     } else if (isAutoPlaying && !isPaused) {
@@ -1062,7 +1162,6 @@ function bindEvents() {
                         nextImage();
                     }
                 }
-                // Haptic feedback if supported
                 if (navigator.vibrate) navigator.vibrate(30);
             }
         });
@@ -1101,6 +1200,7 @@ async function init() {
     await displayPhotos();
     initAudio();
     initFloatingButtons();
+    createMobilePlayPauseButton();
 
     const helpContent = document.querySelector('#helpPopupOverlay .popup-content');
     if (helpContent && !document.getElementById('clearCacheBtn')) {
