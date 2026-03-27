@@ -413,7 +413,7 @@ function clearLongPress() {
 function updateStats() {
     const statsEl = document.getElementById('stats');
     const imageCountEl = document.getElementById('imageCount');
-    if (statsEl) statsEl.textContent = `📸 ${TOTAL_IMAGES} images • Click to select • Hold for fullscreen`;
+    if (statsEl) statsEl.textContent = `📸 ${TOTAL_IMAGES} images • Click to select • Double click for fullscreen`;
     if (imageCountEl) imageCountEl.textContent = `${TOTAL_IMAGES} Moments Captured`;
 }
 
