@@ -1,12 +1,16 @@
 // ============================================
-// KC@18 GALLERY - Red & Black Theme (FIXED)
+// KC@18 GALLERY - Red & Black Theme (WITH INDEXEDDB CACHE)
+// Images are permanently cached for faster loading
 // ============================================
 
 // Configuration
 const LOW_QUALITY_FOLDER = 'KCat18_LQ';
 const ORIGINAL_FOLDER = 'KCat18';
-const HEADER_IMAGE_BASE = '72'; // Your header image number
+const HEADER_IMAGE_BASE = '72';
 const TOTAL_IMAGES = 203;
+const DB_NAME = 'KC18_Gallery';
+const DB_VERSION = 1;
+const STORE_NAME = 'images';
 
 // Global state
 let images = [];
@@ -15,12 +19,137 @@ let autoPlayInterval = null;
 let isAutoPlaying = false;
 let audio = null;
 let clickTimeout = null;
+let db = null;
 
 // ============================================
-// DISPLAY PHOTOS
+// INDEXEDDB FUNCTIONS
 // ============================================
 
-function displayPhotos() {
+// Open IndexedDB database
+function openDatabase() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            db = request.result;
+            resolve(db);
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            // Create object store for images
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                store.createIndex('timestamp', 'timestamp');
+            }
+        };
+    });
+}
+
+// Check if image exists in cache
+function getCachedImage(imageId) {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            resolve(null);
+            return;
+        }
+        
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(imageId);
+        
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => resolve(null);
+    });
+}
+
+// Save image to cache
+function saveImageToCache(imageId, imageUrl, blob) {
+    return new Promise((resolve, reject) => {
+        if (!db) {
+            resolve(false);
+            return;
+        }
+        
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const imageData = {
+            id: imageId,
+            url: imageUrl,
+            blob: blob,
+            timestamp: Date.now()
+        };
+        
+        const request = store.put(imageData);
+        request.onsuccess = () => resolve(true);
+        request.onerror = () => resolve(false);
+    });
+}
+
+// Fetch and cache image
+async function loadImageWithCache(imageNumber, imageUrl) {
+    const imageId = `img_${imageNumber}`;
+    
+    // Check cache first
+    const cached = await getCachedImage(imageId);
+    
+    if (cached && cached.blob) {
+        // Return cached image as object URL
+        const blobUrl = URL.createObjectURL(cached.blob);
+        return { url: blobUrl, fromCache: true, imageId };
+    }
+    
+    // Download from network
+    try {
+        const response = await fetch(imageUrl);
+        if (!response.ok) throw new Error('Network error');
+        
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // Save to cache
+        await saveImageToCache(imageId, imageUrl, blob);
+        
+        return { url: blobUrl, fromCache: false, imageId };
+    } catch (error) {
+        console.error(`Failed to load image ${imageNumber}:`, error);
+        return null;
+    }
+}
+
+// Clear old cache (optional - call this to free up space)
+async function clearOldCache() {
+    if (!db) return;
+    
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    store.clear();
+    
+    console.log('Cache cleared');
+}
+
+// Get cache stats
+async function getCacheStats() {
+    if (!db) return { total: 0, size: 0 };
+    
+    return new Promise((resolve) => {
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const countRequest = store.count();
+        
+        countRequest.onsuccess = () => {
+            resolve({ total: countRequest.result, size: 'Unknown' });
+        };
+        countRequest.onerror = () => resolve({ total: 0, size: 0 });
+    });
+}
+
+// ============================================
+// DISPLAY PHOTOS WITH CACHE
+// ============================================
+
+async function displayPhotos() {
     const grid = document.getElementById('imageGrid');
     if (!grid) return;
     
@@ -37,13 +166,20 @@ function displayPhotos() {
     }
     
     let loadedCount = 0;
+    let cachedCount = 0;
+    let networkCount = 0;
+    
+    // Show cache info
+    const stats = await getCacheStats();
+    if (stats.total > 0) {
+        updateStatsMessage(`📦 Loading ${stats.total} cached images...`);
+    }
     
     for (let i = 1; i <= TOTAL_IMAGES; i++) {
         const card = document.createElement("div");
         card.classList.add("grid-card");
         card.style.animationDelay = `${(i % 20) * 0.02}s`;
         
-        // Use .JPG (uppercase) as primary extension
         const imageUrl = `${LOW_QUALITY_FOLDER}/${i}.JPG`;
         
         card.innerHTML = `
@@ -65,51 +201,36 @@ function displayPhotos() {
         grid.appendChild(card);
         images.push(`${ORIGINAL_FOLDER}/${i}.JPG`);
         
-        // Lazy load images
+        // Load image with cache
         const img = card.querySelector('img');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const skeleton = card.querySelector('.skeleton');
-                    const image = new Image();
-                    image.onload = () => {
-                        img.src = imageUrl;
-                        img.classList.add('loaded');
-                        if (skeleton) skeleton.style.display = 'none';
-                        loadedCount++;
-                        if (progressBar) {
-                            progressBar.style.width = `${(loadedCount / TOTAL_IMAGES) * 100}%`;
-                        }
-                    };
-                    image.onerror = () => {
-                        // Try lowercase if uppercase fails
-                        const lowerUrl = `${LOW_QUALITY_FOLDER}/${i}.jpg`;
-                        const fallbackImage = new Image();
-                        fallbackImage.onload = () => {
-                            img.src = lowerUrl;
-                            img.classList.add('loaded');
-                            if (skeleton) skeleton.style.display = 'none';
-                            loadedCount++;
-                            if (progressBar) {
-                                progressBar.style.width = `${(loadedCount / TOTAL_IMAGES) * 100}%`;
-                            }
-                        };
-                        fallbackImage.onerror = () => {
-                            if (skeleton) skeleton.style.display = 'none';
-                            loadedCount++;
-                            if (progressBar) {
-                                progressBar.style.width = `${(loadedCount / TOTAL_IMAGES) * 100}%`;
-                            }
-                        };
-                        fallbackImage.src = lowerUrl;
-                    };
-                    image.src = imageUrl;
-                    observer.disconnect();
-                }
-            });
-        }, { rootMargin: '100px' });
+        const skeleton = card.querySelector('.skeleton');
         
-        observer.observe(img);
+        // Start loading
+        const result = await loadImageWithCache(i, imageUrl);
+        
+        if (result) {
+            img.src = result.url;
+            img.classList.add('loaded');
+            if (skeleton) skeleton.style.display = 'none';
+            
+            if (result.fromCache) {
+                cachedCount++;
+            } else {
+                networkCount++;
+            }
+        } else {
+            if (skeleton) skeleton.style.display = 'none';
+        }
+        
+        loadedCount++;
+        if (progressBar) {
+            progressBar.style.width = `${(loadedCount / TOTAL_IMAGES) * 100}%`;
+        }
+        
+        // Update stats every 10 images
+        if (loadedCount % 10 === 0 || loadedCount === TOTAL_IMAGES) {
+            updateStatsMessage(`📸 ${loadedCount}/${TOTAL_IMAGES} • 💾 ${cachedCount} cached • 🌐 ${networkCount} new`);
+        }
         
         // Double click to open modal
         card.addEventListener("dblclick", function (e) {
@@ -131,7 +252,11 @@ function displayPhotos() {
     
     updateStats();
     
-    // Hide loading bar after all images are loaded or timeout
+    // Show cache summary
+    const cacheStats = await getCacheStats();
+    updateStatsMessage(`📸 ${TOTAL_IMAGES} images • 💾 ${cacheStats.total} cached • Click to select`);
+    
+    // Hide loading bar
     setTimeout(() => {
         if (loadingBar) {
             loadingBar.style.opacity = '0';
@@ -139,7 +264,12 @@ function displayPhotos() {
                 loadingBar.style.display = 'none';
             }, 500);
         }
-    }, 3000);
+    }, 2000);
+}
+
+function updateStatsMessage(message) {
+    const statsEl = document.getElementById('stats');
+    if (statsEl) statsEl.textContent = message;
 }
 
 function updateStats() {
@@ -204,7 +334,6 @@ function prevImage() {
 
 function downloadOriginal(imageNumber) {
     const link = document.createElement('a');
-    // Try .JPG first (uppercase)
     link.href = `${ORIGINAL_FOLDER}/${imageNumber}.JPG`;
     link.download = `KC18_${imageNumber}.JPG`;
     document.body.appendChild(link);
@@ -347,27 +476,30 @@ function stopAutoPlay() {
 }
 
 // ============================================
-// HEADER IMAGE LOADING - FIXED
+// HEADER IMAGE LOADING
 // ============================================
 
-function loadHeaderImage() {
+async function loadHeaderImage() {
     const heroImg = document.getElementById('heroImage');
     if (!heroImg) return;
     
-    // Try original folder with .JPG first
-    heroImg.src = `${ORIGINAL_FOLDER}/${HEADER_IMAGE_BASE}.JPG`;
-    heroImg.onerror = () => {
-        // Try LQ folder with .JPG
-        heroImg.src = `${LOW_QUALITY_FOLDER}/${HEADER_IMAGE_BASE}.JPG`;
-        heroImg.onerror = () => {
-            // Try lowercase .jpg as fallback
-            heroImg.src = `${ORIGINAL_FOLDER}/${HEADER_IMAGE_BASE}.jpg`;
-            heroImg.onerror = () => {
-                heroImg.style.display = 'none';
-                console.log('Header image not found');
-            };
-        };
-    };
+    // Try to load header image with cache
+    const result = await loadImageWithCache('header', `${ORIGINAL_FOLDER}/${HEADER_IMAGE_BASE}.JPG`);
+    
+    if (result) {
+        heroImg.src = result.url;
+        heroImg.style.display = 'block';
+    } else {
+        // Fallback to LQ folder
+        const fallbackResult = await loadImageWithCache('header_fallback', `${LOW_QUALITY_FOLDER}/${HEADER_IMAGE_BASE}.JPG`);
+        if (fallbackResult) {
+            heroImg.src = fallbackResult.url;
+            heroImg.style.display = 'block';
+        } else {
+            heroImg.style.display = 'none';
+            console.log('Header image not found');
+        }
+    }
 }
 
 // ============================================
@@ -559,10 +691,18 @@ function bindEvents() {
 // INITIALIZATION
 // ============================================
 
-function init() {
+async function init() {
+    // Open IndexedDB first
+    try {
+        await openDatabase();
+        console.log('Cache database ready');
+    } catch (error) {
+        console.error('Failed to open cache:', error);
+    }
+    
     bindEvents();
-    loadHeaderImage();
-    displayPhotos();
+    await loadHeaderImage();
+    await displayPhotos();
     initAudio();
     
     // Setup floating buttons
