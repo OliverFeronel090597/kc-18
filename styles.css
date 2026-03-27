@@ -1,3 +1,8 @@
+/* ============================================
+   KC@18 GALLERY - Complete Optimized CSS
+   Mobile & Desktop Responsive
+   ============================================ */
+
 /* Prevent text selection globally */
 * {
     user-select: none;
@@ -6,17 +11,10 @@
     -ms-user-select: none;
 }
 
-/* Allow text selection in popups and help content (optional) */
+/* Allow text selection in popups and help content */
 .popup-content,
 .help-content,
-.notification-container {
-    user-select: text;
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-}
-
-/* Allow text in stats and badges (optional) */
+.notification-container,
 .stats,
 .hero-badge,
 .card-date,
@@ -32,6 +30,8 @@ body {
     background: #0a0000;
     min-height: 100vh;
     overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
 }
 
 /* Red & Black Theme */
@@ -80,7 +80,7 @@ body {
     transition: width 0.3s ease;
 }
 
-/* Hero Section - Full Height with Text at Top */
+/* Hero Section */
 .hero-section {
     position: relative;
     height: 100vh;
@@ -102,15 +102,8 @@ body {
 }
 
 @keyframes slowZoom {
-
-    0%,
-    100% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.05);
-    }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
 .hero-overlay {
@@ -122,7 +115,6 @@ body {
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.7) 100%);
 }
 
-/* Text Content - Positioned at Top Center */
 .hero-content {
     position: absolute;
     top: 30px;
@@ -140,7 +132,6 @@ body {
         opacity: 0;
         transform: translateY(-30px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -161,15 +152,8 @@ body {
 }
 
 @keyframes pulse {
-
-    0%,
-    100% {
-        text-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
-    }
-
-    50% {
-        text-shadow: 0 0 40px rgba(220, 38, 38, 0.8);
-    }
+    0%, 100% { text-shadow: 0 0 20px rgba(220, 38, 38, 0.5); }
+    50% { text-shadow: 0 0 40px rgba(220, 38, 38, 0.8); }
 }
 
 .hero-content p {
@@ -274,16 +258,16 @@ body {
 
 .sort-label {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 0.65rem;
+    font-size: 0.85rem;
 }
 
 .sort-btn {
     background: transparent;
     border: 1px solid rgba(220, 38, 38, 0.3);
-    padding: 0.2rem 0.2rem;
+    padding: 0.4rem 1rem;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.55rem;
+    font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.7);
     transition: all 0.3s ease;
 }
@@ -299,19 +283,27 @@ body {
     color: white;
 }
 
-/* Grid View */
+/* Grid Container - SCROLLABLE */
 .grid-container {
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    position: relative;
 }
 
+/* Image Grid - Desktop (3-4 columns) */
 .image-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
+    padding-bottom: 20px;
 }
 
+/* Grid Cards */
 .grid-card {
     background: var(--card-bg);
     border-radius: 12px;
@@ -322,11 +314,18 @@ body {
     opacity: 0;
     transform: translateY(20px);
     animation: fadeInUp 0.5s ease forwards;
+    pointer-events: auto;
+    touch-action: pan-y pinch-zoom;
 }
 
 .grid-card.selected {
     border-color: var(--primary-red);
-    box-shadow: 0 0 20px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.5) !important;
+}
+
+.grid-card.long-press {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
 }
 
 @keyframes fadeInUp {
@@ -378,13 +377,8 @@ body {
 }
 
 @keyframes loading {
-    0% {
-        background-position: 200% 0;
-    }
-
-    100% {
-        background-position: -200% 0;
-    }
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 .card-overlay {
@@ -404,21 +398,15 @@ body {
 
 .download-card-btn {
     width: 100%;
-    font-size: 0.6rem;
-    background: var(--primary-red);
+    background: linear-gradient(135deg, #dc2626, #991b1b);
     border: none;
-    padding: 0.2rem 0.2rem;
+    padding: 0.6rem;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
-    color: rgb(0, 0, 0);
+    color: white;
     transition: all 0.3s ease;
     font-family: inherit;
-}
-
-.download-card-btn {
-    background: linear-gradient(135deg, #dc2626, #991b1b);
-    transition: all 0.3s ease;
 }
 
 .download-card-btn:hover {
@@ -434,7 +422,7 @@ body {
     display: flex;
     justify-content: space-between;
     font-size: 0.7rem;
-    color: rgb(0, 0, 0);
+    color: white;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     z-index: 2;
 }
@@ -470,7 +458,7 @@ body {
     z-index: 2000;
     justify-content: center;
     align-items: center;
-    animation: fadeIn 0.5s ease;
+    animation: fadeIn 0.3s ease;
 }
 
 .fullscreen-modal.active {
@@ -499,7 +487,6 @@ body {
         opacity: 0;
         transform: scale(0.9);
     }
-
     to {
         opacity: 1;
         transform: scale(1);
@@ -512,8 +499,8 @@ body {
     right: 30px;
     background: rgba(220, 38, 38, 0.9);
     border: none;
-    width: 100px;
-    height: 100px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     cursor: pointer;
     font-size: 1.5rem;
@@ -579,26 +566,36 @@ body {
 
 /* Floating Buttons */
 .floating-button {
+    z-index: 10000;
     position: fixed;
+    cursor: grab;
+    user-select: none;
+    pointer-events: auto;
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+    transition: all 0.3s ease;
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
     color: white;
     border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-    z-index: 200;
-    transition: all 0.3s ease;
     font-size: 1.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+.floating-button:active {
+    cursor: grabbing;
+}
+
 .floating-button:hover {
     transform: scale(1.1);
     box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+}
+
+.floating-button.hidden {
+    display: none !important;
 }
 
 #floating-download-button {
@@ -609,6 +606,36 @@ body {
 #floating-help-button {
     bottom: 20px;
     right: 90px;
+}
+
+/* Mobile Play/Pause Button */
+.mobile-play-pause {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+    z-index: 10000;
+    font-size: 1.2rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.mobile-play-pause.visible {
+    display: flex;
+}
+
+.mobile-play-pause:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
 }
 
 /* Popups */
@@ -694,22 +721,33 @@ body {
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-/* Responsive */
+/* Scroll indicator gradient */
+.grid-container.scrollable::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(to top, #0a0000, transparent);
+    pointer-events: none;
+    display: block;
+    margin-top: -40px;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet (768px and below) - 2 columns */
 @media (max-width: 768px) {
     .hero-content {
         top: 20px;
@@ -739,10 +777,13 @@ body {
 
     .grid-container {
         padding: 1rem;
+        max-height: calc(100vh - 160px);
+        -webkit-overflow-scrolling: touch;
     }
 
+    /* Tablet: 2 columns */
     .image-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
     }
 
@@ -763,12 +804,10 @@ body {
     .fullscreen-close {
         top: 15px;
         right: 15px;
-        width: 80px;
-        height: 80px;
+        width: 40px;
+        height: 40px;
         font-size: 1.2rem;
     }
-
-
 
     .btn {
         padding: 0.5rem 1rem;
@@ -784,128 +823,7 @@ body {
     #floating-help-button {
         right: 70px;
     }
-}
 
-@media (max-width: 480px) {
-    .hero-content h1 {
-        font-size: 1.8rem;
-    }
-
-    .hero-content p {
-        font-size: 0.8rem;
-    }
-
-    .image-grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 0.8rem;
-    }
-}
-
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes slideOut {
-    from {
-        opacity: 1;
-        transform: translateX(0);
-    }
-
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
-
-.grid-card.selected {
-    border: 2px solid #dc2626 !important;
-    box-shadow: 0 0 20px rgba(220, 38, 38, 0.5) !important;
-}
-
-.floating-button {
-    z-index: 10000;
-    position: fixed;
-    cursor: grab;
-    user-select: none;
-    pointer-events: auto;
-    background: linear-gradient(135deg, #dc2626, #991b1b);
-    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-    transition: all 0.3s ease;
-}
-
-.floating-button:active {
-    cursor: grabbing;
-}
-
-.floating-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
-}
-
-.floating-button.hidden {
-    display: none !important;
-}
-
-.fullscreen-modal.active {
-    display: flex;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-.grid-card.long-press {
-    transform: scale(0.98);
-    transition: transform 0.1s ease;
-}
-
-/* Mobile play/pause button */
-.mobile-play-pause {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #dc2626, #991b1b);
-    color: white;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-    z-index: 10000;
-    font-size: 1.2rem;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.mobile-play-pause.visible {
-    display: flex;
-}
-
-.mobile-play-pause:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
-}
-
-@media (max-width: 768px) {
     .mobile-play-pause {
         display: none;
     }
@@ -915,60 +833,93 @@ body {
     }
 }
 
-/* FIX: Make grid container scrollable */
-.grid-container {
-    max-height: calc(100vh - 180px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    scroll-behavior: smooth;
-    position: relative;
-}
+/* Mobile (480px and below) - 1 column */
+@media (max-width: 480px) {
+    .hero-content h1 {
+        font-size: 1.8rem;
+    }
 
-/* Ensure the grid doesn't block scrolling */
-.image-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-    padding-bottom: 20px;
-}
+    .hero-content p {
+        font-size: 0.8rem;
+    }
 
-/* Cards should not interfere with scrolling */
-.grid-card {
-    pointer-events: auto;
-    touch-action: pan-y pinch-zoom;
-}
+    /* Mobile: 1 column */
+    .image-grid {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+    }
 
-/* Body should scroll naturally */
-body {
-    overflow-x: hidden;
-    overflow-y: auto;
-    height: auto;
-    min-height: 100vh;
-}
-
-/* Fix for mobile touch scrolling */
-@media (max-width: 768px) {
     .grid-container {
-        max-height: calc(100vh - 160px);
-        -webkit-overflow-scrolling: touch;
+        padding: 0.75rem;
+        max-height: calc(100vh - 140px);
+    }
+
+    .sort-label {
+        font-size: 0.7rem;
+    }
+
+    .sort-btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.7rem;
+    }
+
+    .controls-bar {
+        padding: 0.8rem;
+    }
+
+    .logo {
+        font-size: 1.2rem;
+    }
+
+    .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.7rem;
+    }
+
+    .stats {
+        font-size: 0.7rem;
+    }
+
+    .card-info {
+        font-size: 0.6rem;
+    }
+
+    .card-date, .card-name {
+        padding: 0.15rem 0.4rem;
+        font-size: 0.55rem;
+    }
+
+    .download-card-btn {
+        padding: 0.4rem;
+        font-size: 0.7rem;
+    }
+}
+
+/* Small mobile (360px and below) */
+@media (max-width: 360px) {
+    .hero-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .hero-content p {
+        font-size: 0.7rem;
+    }
+
+    .hero-badge {
+        font-size: 0.7rem;
+        padding: 0.3rem 1rem;
     }
 
     .image-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 1rem;
+        gap: 0.6rem;
     }
-}
 
-/* Scroll indicator gradient */
-.grid-container.scrollable::after {
-    content: '';
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 40px;
-    background: linear-gradient(to top, #0a0000, transparent);
-    pointer-events: none;
-    display: block;
-    margin-top: -40px;
+    .btn {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.65rem;
+    }
+
+    .logo {
+        font-size: 1rem;
+    }
 }
