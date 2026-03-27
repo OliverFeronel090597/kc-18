@@ -367,7 +367,6 @@ async function displayPhotos() {
                 <img alt="Photo ${i}" loading="lazy">
                 <div class="card-info">
                     <span class="card-date">📅 Photo ${i}</span>
-                    <span class="card-name">📷 Image ${i}</span>
                 </div>
                 <div class="card-overlay">
                     <button class="download-card-btn" onclick="event.stopPropagation(); downloadOriginal(${i})">📥 Download Original</button>
