@@ -150,8 +150,8 @@ style.textContent = `
         position: fixed;
         bottom: 20px;
         left: 20px;
-        width: 50px;
-        height: 50px;
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
         background: linear-gradient(135deg, #dc2626, #991b1b);
         color: white;

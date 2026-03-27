@@ -506,8 +506,8 @@ body {
     right: 30px;
     background: rgba(220, 38, 38, 0.9);
     border: none;
-    width: 50px;
-    height: 50px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     cursor: pointer;
     font-size: 1.5rem;
@@ -757,10 +757,12 @@ body {
     .fullscreen-close {
         top: 15px;
         right: 15px;
-        width: 40px;
-        height: 40px;
+        width: 80px;
+        height: 80px;
         font-size: 1.2rem;
     }
+
+    
 
     .btn {
         padding: 0.5rem 1rem;
