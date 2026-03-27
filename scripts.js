@@ -2,6 +2,7 @@
 // KC@18 GALLERY - Complete Optimized Version
 // Features: Fast loading, notifications, cache, draggable buttons, 
 // Auto-play with pause, spacebar pause, long-press for mobile, swipe navigation, mobile play/pause
+// Navigation buttons ONLY show when NOT auto-playing
 // ============================================
 
 // Configuration
@@ -195,7 +196,7 @@ function createMobilePlayPauseButton() {
         btn.className = 'mobile-play-pause';
         btn.innerHTML = '⏸️';
         document.body.appendChild(btn);
-        
+
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (isAutoPlaying && !isPaused) {
@@ -204,8 +205,7 @@ function createMobilePlayPauseButton() {
             } else if (isAutoPlaying && isPaused) {
                 resumeAutoPlay();
                 btn.innerHTML = '⏸️';
-            } else if (!isAutoPlaying && modal?.classList.contains('active')) {
-                // If modal is open but not auto-playing, start auto-play
+            } else if (!isAutoPlaying && document.getElementById('fullscreenModal').classList.contains('active')) {
                 startAutoPlay();
                 btn.innerHTML = '⏸️';
             }
@@ -217,7 +217,7 @@ function createMobilePlayPauseButton() {
 function updateMobilePlayPauseButton() {
     const btn = document.getElementById('mobile-play-pause');
     if (!btn) return;
-    
+
     if (isAutoPlaying && !isPaused) {
         btn.innerHTML = '⏸️';
         btn.title = 'Pause Auto-Play';
@@ -400,15 +400,15 @@ async function displayPhotos() {
                 clearLongPress();
             }, 500);
         });
-        
+
         card.addEventListener('touchmove', () => {
             clearLongPress();
         });
-        
+
         card.addEventListener('touchend', () => {
             clearLongPress();
         });
-        
+
         // Mouse long press for desktop (hold to maximize)
         card.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
@@ -420,11 +420,11 @@ async function displayPhotos() {
                 clearLongPress();
             }, 500);
         });
-        
+
         card.addEventListener('mousemove', () => {
             if (longPressTimer) clearLongPress();
         });
-        
+
         card.addEventListener('mouseup', () => {
             clearLongPress();
         });
@@ -518,31 +518,33 @@ function openModal(imageSrc, fromAutoPlay = false) {
     const prevBtn = document.getElementById('fullscreenPrev');
     const nextBtn = document.getElementById('fullscreenNext');
     const mobileBtn = document.getElementById('mobile-play-pause');
-    
+
     if (!modal || !modalImg) return;
 
     modal.classList.add('active');
     modalImg.src = imageSrc;
     if (info) info.textContent = `Photo ${currentImageIndex + 1} of ${TOTAL_IMAGES}`;
-    
+
     // Hide floating buttons when modal is open
     hideFloatingButtons();
-    
+
     // Show mobile play/pause button when modal is open
     if (mobileBtn) {
         mobileBtn.classList.add('visible');
         updateMobilePlayPauseButton();
     }
-    
-    // Hide navigation buttons during auto-play
-    if (fromAutoPlay || isAutoPlaying) {
-        if (prevBtn) prevBtn.style.display = 'none';
-        if (nextBtn) nextBtn.style.display = 'none';
-    } else {
+
+    // Navigation buttons ONLY show when NOT auto-playing
+    if (!isAutoPlaying) {
+        // Manual mode - show navigation buttons
         if (prevBtn) prevBtn.style.display = 'flex';
         if (nextBtn) nextBtn.style.display = 'flex';
+    } else {
+        // Auto-play mode - always hide navigation buttons (even when paused)
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
     }
-    
+
     // If manually opened while auto-play is active, stop auto-play without notification
     if (!fromAutoPlay && isAutoPlaying) {
         stopAutoPlay(false);
@@ -554,19 +556,19 @@ function closeModal(fromAutoPlay = false) {
     const prevBtn = document.getElementById('fullscreenPrev');
     const nextBtn = document.getElementById('fullscreenNext');
     const mobileBtn = document.getElementById('mobile-play-pause');
-    
+
     if (modal) modal.classList.remove('active');
-    
+
     // Hide mobile play/pause button when modal closes
     if (mobileBtn) mobileBtn.classList.remove('visible');
-    
+
     // Restore floating buttons when modal closes
     showFloatingButtons();
-    
+
     // Restore navigation buttons when closing
     if (prevBtn) prevBtn.style.display = 'flex';
     if (nextBtn) nextBtn.style.display = 'flex';
-    
+
     // Only stop auto-play if closing manually while auto-play is active
     if (!fromAutoPlay && isAutoPlaying) {
         stopAutoPlay(true);
@@ -598,7 +600,7 @@ function prevImage() {
 }
 
 // ============================================
-// AUTO-PLAY FUNCTIONALITY WITH PAUSE
+// AUTO-PLAY FUNCTIONALITY
 // ============================================
 
 function initAudio() {
@@ -630,13 +632,13 @@ function pauseAutoPlay() {
         if (audio) audio.pause();
         showNotification('⏸️ Auto-Play Paused', 'Tap play to resume slideshow', 'info', 2000);
         document.getElementById('stats').textContent = '⏸️ AUTO-PLAY PAUSED • Tap ▶ to resume';
-        
-        // Show navigation buttons when paused
+
+        // Navigation buttons remain HIDDEN when paused (auto-play is still active)
         const prevBtn = document.getElementById('fullscreenPrev');
         const nextBtn = document.getElementById('fullscreenNext');
-        if (prevBtn) prevBtn.style.display = 'flex';
-        if (nextBtn) nextBtn.style.display = 'flex';
-        
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+
         // Update mobile button
         updateMobilePlayPauseButton();
     }
@@ -649,13 +651,13 @@ function resumeAutoPlay() {
         if (audio) audio.play().catch(() => {});
         showNotification('▶️ Auto-Play Resumed', 'Slideshow continues', 'success', 2000);
         document.getElementById('stats').textContent = '🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18';
-        
-        // Hide navigation buttons when resumed
+
+        // Navigation buttons remain HIDDEN (auto-play is active)
         const prevBtn = document.getElementById('fullscreenPrev');
         const nextBtn = document.getElementById('fullscreenNext');
         if (prevBtn) prevBtn.style.display = 'none';
         if (nextBtn) nextBtn.style.display = 'none';
-        
+
         // Update mobile button
         updateMobilePlayPauseButton();
     }
@@ -674,7 +676,13 @@ function startAutoPlay() {
     autoPlayInterval = setInterval(nextImage, 4000);
     showNotification('🎬 Auto-Play Started', 'Tap pause button to pause', 'success', 2000);
     document.getElementById('stats').textContent = '🎬 AUTO-PLAY ACTIVE • Playing: One Direction - 18';
-    
+
+    // Hide navigation buttons when auto-play starts
+    const prevBtn = document.getElementById('fullscreenPrev');
+    const nextBtn = document.getElementById('fullscreenNext');
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+
     // Update mobile button
     updateMobilePlayPauseButton();
 }
@@ -682,26 +690,26 @@ function startAutoPlay() {
 function stopAutoPlay(showNotif = true) {
     const prevBtn = document.getElementById('fullscreenPrev');
     const nextBtn = document.getElementById('fullscreenNext');
-    
+
     if (autoPlayInterval) {
         clearInterval(autoPlayInterval);
         autoPlayInterval = null;
     }
-    
+
     const wasAutoPlaying = isAutoPlaying;
     isAutoPlaying = false;
     isPaused = false;
     stopMusic();
     closeModal(true);
     updateStats();
-    
-    // Restore navigation buttons when auto-play stops
+
+    // Show navigation buttons when auto-play stops (manual mode)
     if (prevBtn) prevBtn.style.display = 'flex';
     if (nextBtn) nextBtn.style.display = 'flex';
-    
+
     // Update mobile button
     updateMobilePlayPauseButton();
-    
+
     if (wasAutoPlaying && showNotif) {
         showNotification('⏹️ Auto-Play Stopped', 'Slideshow has been stopped', 'info', 1500);
     }
@@ -1058,7 +1066,7 @@ function bindEvents() {
             closeModal(false);
         }
     });
-    
+
     if (prevBtn) prevBtn.addEventListener('click', () => {
         if (!isAutoPlaying) {
             prevImage();
@@ -1069,7 +1077,7 @@ function bindEvents() {
             prevImage();
         }
     });
-    
+
     if (nextBtn) nextBtn.addEventListener('click', () => {
         if (!isAutoPlaying) {
             nextImage();
@@ -1081,7 +1089,7 @@ function bindEvents() {
         }
     });
 
-    if (modal) modal.addEventListener('click', (e) => { 
+    if (modal) modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             if (isAutoPlaying) {
                 stopAutoPlay(true);
@@ -1135,7 +1143,7 @@ function bindEvents() {
     // Mobile swipe gestures with improved detection
     let touchstartX = 0, touchstartY = 0;
     if (modal) {
-        modal.addEventListener('touchstart', (e) => { 
+        modal.addEventListener('touchstart', (e) => {
             touchstartX = e.changedTouches[0].screenX;
             touchstartY = e.changedTouches[0].screenY;
         });

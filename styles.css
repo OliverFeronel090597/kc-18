@@ -794,3 +794,265 @@ body {
         gap: 0.8rem;
     }
 }
+
+
+/* ============================================
+   FLOATING BUTTONS - Fixed Alignment
+   ============================================ */
+
+/* Floating Buttons Base */
+.floating-button {
+    position: fixed;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-red), var(--dark-red));
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+    z-index: 10000;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.floating-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+}
+
+.floating-button.hidden {
+    display: none !important;
+}
+
+/* Download Button - Right Side */
+#floating-download-button {
+    bottom: 20px;
+    right: 20px;
+    left: auto;
+    top: auto;
+}
+
+/* Help Button - Left Side of Download Button */
+#floating-help-button {
+    bottom: 20px;
+    right: 90px;
+    left: auto;
+    top: auto;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE - Fixed Alignment
+   ============================================ */
+
+@media (max-width: 768px) {
+    .floating-button {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 1.5rem !important;
+    }
+    
+    /* Download Button - Right Side on Mobile */
+    #floating-download-button {
+        bottom: 20px !important;
+        right: 20px !important;
+        left: auto !important;
+        top: auto !important;
+    }
+    
+    /* Help Button - Left of Download Button on Mobile */
+    #floating-help-button {
+        bottom: 20px !important;
+        right: 100px !important;
+        left: auto !important;
+        top: auto !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .floating-button {
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 1.2rem !important;
+    }
+    
+    #floating-download-button {
+        bottom: 15px !important;
+        right: 15px !important;
+    }
+    
+    #floating-help-button {
+        bottom: 15px !important;
+        right: 80px !important;
+    }
+}
+
+/* ============================================
+   ENHANCED MOBILE BUTTONS - Larger for Better Touch Experience
+   ============================================ */
+
+/* Fullscreen Navigation Buttons - Larger for Mobile */
+@media (max-width: 768px) {
+    .fullscreen-nav {
+        width: 70px !important;
+        height: 70px !important;
+        font-size: 2.2rem !important;
+        background: rgba(220, 38, 38, 0.9) !important;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .fullscreen-prev {
+        left: 20px !important;
+        right: auto !important;
+    }
+    
+    .fullscreen-next {
+        right: 20px !important;
+        left: auto !important;
+    }
+    
+    .fullscreen-close {
+        width: 70px !important;
+        height: 70px !important;
+        font-size: 1.8rem !important;
+        top: 20px !important;
+        right: 20px !important;
+        left: auto !important;
+        bottom: auto !important;
+        background: rgba(220, 38, 38, 0.95) !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Mobile Play/Pause Button - Larger */
+    .mobile-play-pause {
+        width: 80px !important;
+        height: 80px !important;
+        font-size: 2rem !important;
+        bottom: 30px !important;
+        left: 30px !important;
+        right: auto !important;
+        top: auto !important;
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5) !important;
+    }
+    
+    /* Download button on cards - Larger touch area */
+    .download-card-btn {
+        padding: 12px !important;
+        font-size: 0.9rem !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Sort buttons - Larger for mobile */
+    .sort-btn {
+        padding: 0.6rem 1.2rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    /* Control buttons - Larger for mobile */
+    .btn {
+        padding: 0.7rem 1.2rem !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* For very small phones (max-width: 480px) */
+@media (max-width: 480px) {
+    .fullscreen-nav {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 1.8rem !important;
+    }
+    
+    .fullscreen-prev {
+        left: 15px !important;
+    }
+    
+    .fullscreen-next {
+        right: 15px !important;
+    }
+    
+    .fullscreen-close {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 1.5rem !important;
+        top: 15px !important;
+        right: 15px !important;
+    }
+    
+    .mobile-play-pause {
+        width: 70px !important;
+        height: 70px !important;
+        font-size: 1.8rem !important;
+        bottom: 20px !important;
+        left: 20px !important;
+    }
+    
+    .download-card-btn {
+        padding: 10px !important;
+        font-size: 0.85rem !important;
+    }
+}
+
+/* For tablets (min-width: 769px to 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .fullscreen-nav {
+        width: 65px !important;
+        height: 65px !important;
+        font-size: 2rem !important;
+    }
+    
+    .fullscreen-close {
+        width: 65px !important;
+        height: 65px !important;
+        font-size: 1.6rem !important;
+    }
+    
+    .mobile-play-pause {
+        width: 75px !important;
+        height: 75px !important;
+        font-size: 1.8rem !important;
+    }
+    
+    .floating-button {
+        width: 55px !important;
+        height: 55px !important;
+        font-size: 1.3rem !important;
+    }
+    
+    #floating-help-button {
+        right: 95px !important;
+    }
+}
+
+/* Active touch feedback for mobile - visual feedback on tap */
+@media (hover: none) and (pointer: coarse) {
+    .fullscreen-nav:active,
+    .fullscreen-close:active,
+    .mobile-play-pause:active,
+    .floating-button:active,
+    .btn:active,
+    .sort-btn:active {
+        transform: scale(0.95) !important;
+        transition: transform 0.1s ease !important;
+    }
+    
+    .grid-card:active {
+        transform: scale(0.98) !important;
+        transition: transform 0.1s ease !important;
+    }
+    
+    .download-card-btn:active {
+        transform: scale(0.97) !important;
+    }
+}
+
+/* Ensure floating buttons stay on top during modal */
+.fullscreen-modal.active ~ .floating-button,
+.fullscreen-modal.active + .floating-button {
+    display: none !important;
+}
