@@ -1,11 +1,11 @@
 // ============================================
-// KC@18 GALLERY - Red & Black Theme
+// KC@18 GALLERY - Red & Black Theme (FIXED)
 // ============================================
 
 // Configuration
 const LOW_QUALITY_FOLDER = 'KCat18_LQ';
 const ORIGINAL_FOLDER = 'KCat18';
-const HEADER_IMAGE_BASE = '72';
+const HEADER_IMAGE_BASE = '72'; // Your header image number
 const TOTAL_IMAGES = 203;
 
 // Global state
@@ -33,6 +33,7 @@ function displayPhotos() {
     if (loadingBar) {
         loadingBar.style.display = 'block';
         loadingBar.style.opacity = '1';
+        if (progressBar) progressBar.style.width = '0%';
     }
     
     let loadedCount = 0;
@@ -42,6 +43,7 @@ function displayPhotos() {
         card.classList.add("grid-card");
         card.style.animationDelay = `${(i % 20) * 0.02}s`;
         
+        // Use .JPG (uppercase) as primary extension
         const imageUrl = `${LOW_QUALITY_FOLDER}/${i}.JPG`;
         
         card.innerHTML = `
@@ -80,11 +82,26 @@ function displayPhotos() {
                         }
                     };
                     image.onerror = () => {
-                        if (skeleton) skeleton.style.display = 'none';
-                        loadedCount++;
-                        if (progressBar) {
-                            progressBar.style.width = `${(loadedCount / TOTAL_IMAGES) * 100}%`;
-                        }
+                        // Try lowercase if uppercase fails
+                        const lowerUrl = `${LOW_QUALITY_FOLDER}/${i}.jpg`;
+                        const fallbackImage = new Image();
+                        fallbackImage.onload = () => {
+                            img.src = lowerUrl;
+                            img.classList.add('loaded');
+                            if (skeleton) skeleton.style.display = 'none';
+                            loadedCount++;
+                            if (progressBar) {
+                                progressBar.style.width = `${(loadedCount / TOTAL_IMAGES) * 100}%`;
+                            }
+                        };
+                        fallbackImage.onerror = () => {
+                            if (skeleton) skeleton.style.display = 'none';
+                            loadedCount++;
+                            if (progressBar) {
+                                progressBar.style.width = `${(loadedCount / TOTAL_IMAGES) * 100}%`;
+                            }
+                        };
+                        fallbackImage.src = lowerUrl;
                     };
                     image.src = imageUrl;
                     observer.disconnect();
@@ -187,6 +204,7 @@ function prevImage() {
 
 function downloadOriginal(imageNumber) {
     const link = document.createElement('a');
+    // Try .JPG first (uppercase)
     link.href = `${ORIGINAL_FOLDER}/${imageNumber}.JPG`;
     link.download = `KC18_${imageNumber}.JPG`;
     document.body.appendChild(link);
@@ -329,18 +347,25 @@ function stopAutoPlay() {
 }
 
 // ============================================
-// HEADER IMAGE LOADING
+// HEADER IMAGE LOADING - FIXED
 // ============================================
 
 function loadHeaderImage() {
     const heroImg = document.getElementById('heroImage');
     if (!heroImg) return;
     
+    // Try original folder with .JPG first
     heroImg.src = `${ORIGINAL_FOLDER}/${HEADER_IMAGE_BASE}.JPG`;
     heroImg.onerror = () => {
+        // Try LQ folder with .JPG
         heroImg.src = `${LOW_QUALITY_FOLDER}/${HEADER_IMAGE_BASE}.JPG`;
         heroImg.onerror = () => {
-            heroImg.style.display = 'none';
+            // Try lowercase .jpg as fallback
+            heroImg.src = `${ORIGINAL_FOLDER}/${HEADER_IMAGE_BASE}.jpg`;
+            heroImg.onerror = () => {
+                heroImg.style.display = 'none';
+                console.log('Header image not found');
+            };
         };
     };
 }
